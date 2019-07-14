@@ -1,0 +1,308 @@
+[
+    {
+        "key": "group_5d26af3f15d16",
+        "title": "Community Ads",
+        "fields": [
+            {
+                "key": "field_5d26af61ac3f6",
+                "label": "Complete",
+                "name": "complete",
+                "type": "true_false",
+                "instructions": "Toggle this when the request has been confirmed as completed by the teacher.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 0,
+                "ui": 0,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_community_ad"
+                },
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "eefss_manager"
+                }
+            ],
+            [
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "administrator"
+                },
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_community_ad"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    },
+    {
+        "key": "group_5d2a956648466",
+        "title": "Request Complete",
+        "fields": [
+            {
+                "key": "field_5d2a7901b75b8",
+                "label": "Complete",
+                "name": "complete",
+                "type": "true_false",
+                "instructions": "Mark this when the request has been fulfilled.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 0,
+                "ui": 0,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_warehouse_ad"
+                },
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "administrator"
+                }
+            ],
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_warehouse_ad"
+                },
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "eefss_manager"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "acf_after_title",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    },
+    {
+        "key": "group_5d26afaad0532",
+        "title": "Request Details",
+        "fields": [
+            {
+                "key": "field_5d26b06a557ed",
+                "label": "Quantity",
+                "name": "quantity",
+                "type": "number",
+                "instructions": "If more than one item is needed, specify that quantity here.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 1,
+                "placeholder": "",
+                "prepend": "",
+                "append": "",
+                "min": "",
+                "max": "",
+                "step": ""
+            },
+            {
+                "key": "field_5d26b08c557ee",
+                "label": "Received?",
+                "name": "received",
+                "type": "true_false",
+                "instructions": "Toggle this when your request has been fulfilled.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "True",
+                "default_value": 0,
+                "ui": 0,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_community_ad"
+                }
+            ],
+            [
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "eefss_teacher"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "side",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    },
+    {
+        "key": "group_5d26aeb4637af",
+        "title": "Warehouse Ad Details",
+        "fields": [
+            {
+                "key": "field_5d26aed1d2928",
+                "label": "Quantitiy",
+                "name": "quantitiy",
+                "type": "number",
+                "instructions": "If a posting has more than one item available (chairs, pencils, etc), enter the quantity to display in the ad.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 1,
+                "placeholder": "",
+                "prepend": "Quantity",
+                "append": "",
+                "min": "",
+                "max": "",
+                "step": ""
+            },
+            {
+                "key": "field_5d26aefad2929",
+                "label": "Requested",
+                "name": "requested",
+                "type": "true_false",
+                "instructions": "Toggle to true once a request for the item has come in from a registered user.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 0,
+                "ui": 0,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            },
+            {
+                "key": "field_5d293db175f33",
+                "label": "Requested By",
+                "name": "requested_by",
+                "type": "text",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": "",
+                "maxlength": ""
+            },
+            {
+                "key": "field_5d2a8f0ad9b65",
+                "label": "Requested On",
+                "name": "requested_on",
+                "type": "text",
+                "instructions": "Date the item was requested by the user.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": "",
+                "maxlength": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_warehouse_ad"
+                },
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "eefss_manager"
+                }
+            ],
+            [
+                {
+                    "param": "current_user_role",
+                    "operator": "==",
+                    "value": "administrator"
+                },
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "eefss_warehouse_ad"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    }
+]
