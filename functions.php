@@ -185,6 +185,80 @@ function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
 	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
 }
 
+/** Redirect to index on logout **/
+add_action( 'wp_logout', 'eefss_redirect_user_on_logout');
+function eefss_redirect_user_on_logout() {
+	wp_redirect( home_url() );
+	exit();
+}
+
+// TODO: Create custom menu logic internally
+add_action('admin_init', 'eefss_main_nav_menus',20,2);
+function eefss_main_nav_menus() {
+	$logged_in_menu = 'logged-in';
+	$logged_out_menu = 'logged-out';
+
+	$logged_in_exists = wp_get_nav_menu_object( $logged_in_menu );
+	$logged_out_exists = wp_get_nav_menu_object( $logged_out_menu );
+
+	// If it doesn't exist, let's create it.
+	if( !$logged_in_exists) {
+		$menu_id = wp_create_nav_menu($logged_in_menu);
+
+		// Set up default menu items
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Home'),
+			'menu-item-classes' => 'home',
+			'menu-item-url' => home_url( '/' ), 
+			'menu-item-status' => 'publish'));
+
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Community'),
+			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
+			'menu-item-status' => 'publish'));
+
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Warehouse'),
+			'menu-item-url' => home_url( '/eefss_warehouse_ad/' ), 
+			'menu-item-status' => 'publish'));
+
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Logout'),
+			'menu-item-url' => wp_logout_url('/'), 
+			'menu-item-status' => 'publish'));
+	}
+
+	if( !$logged_out_exists ) {
+		$menu_id = wp_create_nav_menu($logged_out_menu);
+
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Community'),
+			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
+			'menu-item-status' => 'publish'));
+
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Login'),
+			'menu-item-url' => wp_login_url('index.php'),
+			'menu-item-status' => 'publish'));
+		
+		wp_update_nav_menu_item($menu_id, 0, array(
+			'menu-item-title' =>  __('Register'),
+			'menu-item-url' => home_url( '/wp-login.php?action=register' ), 
+			'menu-item-status' => 'publish'));
+	}
+}
+
+add_filter('wp_nav_menu_args', 'eefss_user_login_check');
+function eefss_user_login_check($args = '') {
+	if( is_user_logged_in() ) { 
+    	$args['menu'] = 'logged-in';
+	} else { 
+    	$args['menu'] = 'logged-out';
+	} 
+    return $args;
+}
+
+
 add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
 add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
 function eefss_show_extra_profile_fields( $user ) {
