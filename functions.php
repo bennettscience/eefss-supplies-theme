@@ -497,13 +497,23 @@ function posts_for_current_author($query) {
 }
 
 /** Add dashboard metaboxes for users based on role **/
-add_action( 'wp_dashboard_setup', 'eefss_dashboard_meta_boxes');
+add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
 	if(!current_user_can('eefss_teacher')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
+
+		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
+		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
+		remove_meta_box('dashboard_primary', 'dashboard', 'side');
+		remove_meta_box('dashboard_quick_press', 'dashboard', 'side');
+
 	} else {
 		add_meta_box('user-community-ads', __('Your Ads'), 'eefss_teacher_dash_meta_display', 'dashboard', 'normal', 'high');
-		add_meta_box('eefss-requested-items', __('Warehouse Requests'), 'eefss_teacher_dash_requests', 'dashboard', 'normal');
+		add_meta_box('eefss-requested-items', __('Warehouse Requests'), 'eefss_teacher_dash_requests', 'dashboard', 'side');
+
+		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
+		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
+		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 	}
 }
 
