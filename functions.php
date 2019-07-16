@@ -70,6 +70,7 @@ function eefss_request_item_callback() {
 
 	$date = new DateTime();
 
+	// TODO: validate the current status of the item
 	if($request === 'request_item') {
 		// get the ACF for the post
 		update_field('requested', true, intval($post_id));
@@ -178,6 +179,12 @@ function eefss_user_register( $user_id ) {
 
 }
 
+/** Redirect teachers to index instead of the dashboard after login **/
+add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
+function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
+	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
+}
+
 add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
 add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
 function eefss_show_extra_profile_fields( $user ) {
@@ -205,18 +212,95 @@ function eefss_show_extra_profile_fields( $user ) {
 /** CUSTOM STATUSES, POSTS, ROLES */
 /**********************************/
 
-/** Register a custom 'Requested' post status */
+/** Register a custom 'Requested' and 'Complete' post status */
 add_action( 'init', 'eefss_custom_requested_status' );
 function eefss_custom_requested_status() {
 	register_post_status( 'requested', array(
-		'label'                     => _x( 'Requested', 'eefss_warehouse_ad' ),
+		'label'                     => _x( 'Requested', 'post' ),
+		'post_type'					=> 'eefss_warehouse_ad',
 		'public'                    => true,
 		'exclude_from_search'       => false,
 		'show_in_admin_all_list'    => true,
 		'show_in_admin_status_list' => true,
 		'label_count'               => _n_noop( 'Requested (%s)', 'Requested (%s)' ),
 	) );
+
+	register_post_status( 'completed', array(
+		'label' 					=> _x('Completed', 'post'),
+		'post_type'					=> 'eefss_warehouse_ad',
+		'public' 					=> true,
+		'exclude_from_search' 		=> false,
+		'show_in_admin_all_list' 	=> true,
+		'show_in_admin_status_list' => true,
+		'label_count' 				=> _n_noop( 'Completed (%s)', 'Completed (%s)'),
+	));
 }
+
+//TODO: custom statuses in quick edit
+//TODO: custom statuses in bulk edit
+/** Add the post statuses to the admin menus **/
+add_action('admin_footer-post.php', 'eefss_append_post_status');
+function eefss_append_post_status() {
+
+	global $wp_post_statuses, $post;
+		// Get all non-builtin post status and add them as <option>
+		$options = $display = '';
+		foreach ( $wp_post_statuses as $status )
+		{
+			if ( ! $status->_builtin )
+			{
+				// Match against the current posts status
+				$selected = selected( $post->post_status, $status->name, false );
+				// If we one of our custom post status is selected, remember it
+				$selected AND $display = $status->label;
+				// Build the options
+				$options .= "<option{$selected} value='{$status->name}'>{$status->label}</option>";
+			}
+		}
+		?>
+		<script type="text/javascript">
+			jQuery( document ).ready( function($) 
+			{
+				let appended = false;
+
+				<?php
+				// Add the selected post status label to the "Status: [Name] (Edit)" 
+				if ( ! empty( $display ) ) : 
+				?>
+					$( '#post-status-display' ).html( '<?php echo $display; ?>' )
+				<?php 
+				endif; 
+				// Add the options to the <select> element
+				?>
+				$( '.edit-post-status' ).on( 'click', function()
+				{
+					if(!appended) {
+						let select = $( '#post-status-select' ).find( 'select' );
+						$( select ).append( "<?php echo $options; ?>" );
+						appended = true;
+					
+					}
+					
+				} );
+
+				$( '.save-post-status ').on('click', function() {
+					let select = $('#post-status-select').find('select').val();
+					console.log(select);
+					switch(select){
+						case('requested'):
+							$('#save-post').val('Set Requested Status');
+							break;
+						case('completed'):
+							$('#save-post').val('Mark as Complete');
+							break;
+						default:
+							$('#save-post').val('Save');
+					}
+				})
+			} );
+		</script>
+		<?php
+	};
 
 /** Create the custom user roles **/
 add_action( 'init', 'eefss_add_custom_roles' );
@@ -419,6 +503,7 @@ function eefss_dashboard_meta_boxes() {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
 	} else {
 		add_meta_box('user-community-ads', __('Your Ads'), 'eefss_teacher_dash_meta_display', 'dashboard', 'normal', 'high');
+		add_meta_box('eefss-requested-items', __('Warehouse Requests'), 'eefss_teacher_dash_requests', 'dashboard', 'normal');
 	}
 }
 
@@ -475,6 +560,8 @@ function eefss_manager_dash_meta_display($data) {
 /** Define metabox for Teacher role **/
 function eefss_teacher_dash_meta_display($data) {
 
+	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
+
 	// Get all posts by this author
 	$query = new WP_Query(array(
 		'post_type' => 'eefss_community_ad',
@@ -504,6 +591,47 @@ function eefss_teacher_dash_meta_display($data) {
 				</td>
 				<td>
 					<?php echo eefss_get_post_view(); ?>
+				</td>
+			</tr>
+		
+		<?php endwhile; ?>
+
+		</tbody>
+	</table>
+
+	<?php
+	wp_reset_query();
+}
+
+function eefss_teacher_dash_requests($data) {
+
+	$user_id = get_current_user_id();
+	$user_email = get_user_by('id', intval($user_id))->user_email;
+	
+	$query = new WP_Query(array(
+		'numberposts' => -1,
+		'post_type' => 'eefss_warehouse_ad',
+		'meta_key' => 'requested_by',
+		'meta_value' => $user_email,
+		'orderby' => 'post_date',
+		'order' => 'ASC',
+	));
+
+	?>
+
+	<table>
+		<thead>
+			<th>Title</th>
+			<th>Status</th>
+		</thead>
+		<tbody>
+		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
+			<tr>
+				<td>
+					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+				</td>
+				<td>
+					<?php echo get_post_status(); ?>
 				</td>
 			</tr>
 		
