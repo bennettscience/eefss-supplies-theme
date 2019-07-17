@@ -96,11 +96,26 @@ function eefss_request_item_callback() {
 add_action('register_form', 'eefss_register_form');
 function eefss_register_form() {
 	
-	// TODO: Add all the schools here
 	$allowed = array(
 		'Beardsley',
 		'Beck',
 		'Bristol',
+		'Central',
+		'Cleveland',
+		'Daly',
+		'Eastwood',
+		'Elkhart Academy',
+		'Feeser',
+		'Hawthorne',
+		'Memorial',
+		'North Side',
+		'Osolo',
+		'Pierre Moran',
+		'Pinewood',
+		'Riverview',
+		'Roosevelt',
+		'West Side',
+		'Woodland',
 	);
 
 	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
@@ -110,16 +125,14 @@ function eefss_register_form() {
 	<p>
 		<label for="building"><?php esc_html_e( 'Building', 'crf' ) ?><br/>
 			<select
-
 			       id="building"
 			       name="building"
-			       value="<?php echo esc_attr( $building ); ?>"
 			       class="input"
 			>
 
 			<?php 
 				foreach($allowed as $the_building) {
-					echo '<option value='. $the_building .'>' . $the_building .'</option>';
+					echo '<option value="'. $the_building .'">' . $the_building .'</option>';
 				}
 			?>
 			</select>
@@ -132,11 +145,26 @@ function eefss_register_form() {
 add_filter( 'registration_errors', 'eefss_registration_errors', 10, 3 );
 function eefss_registration_errors( $errors, $sanitized_user_login, $user_email ) {
 
-	// TODO: Add all schools
 	$allowed = array(
 		'Beardsley',
 		'Beck',
 		'Bristol',
+		'Central HS',
+		'Cleveland',
+		'Daly',
+		'Eastwood',
+		'Elkhart Academy',
+		'Feeser',
+		'Hawthorne',
+		'Memorial HS',
+		'North Side MS',
+		'Osolo',
+		'Pierre Moran MS',
+		'Pinewood',
+		'Riverview',
+		'Roosevelt',
+		'West Side MS',
+		'Woodland',
 	);
 
 	// Make sure a building is selected.
@@ -165,6 +193,22 @@ function eefss_user_register( $user_id ) {
 		'Beardsley',
 		'Beck',
 		'Bristol',
+		'Central HS',
+		'Cleveland',
+		'Daly',
+		'Eastwood',
+		'Elkhart Academy',
+		'Feeser',
+		'Hawthorne',
+		'Memorial HS',
+		'North Side MS',
+		'Osolo',
+		'Pierre Moran MS',
+		'Pinewood',
+		'Riverview',
+		'Roosevelt',
+		'West Side MS',
+		'Woodland',
 	);
 
 	// Make sure a building is submitted to the DB.
@@ -192,7 +236,6 @@ function eefss_redirect_user_on_logout() {
 	exit();
 }
 
-// TODO: Create custom menu logic internally
 add_action('admin_init', 'eefss_main_nav_menus',20,2);
 function eefss_main_nav_menus() {
 	$logged_in_menu = 'logged-in';
@@ -268,6 +311,22 @@ function eefss_show_extra_profile_fields( $user ) {
 		'Beardsley',
 		'Beck',
 		'Bristol',
+		'Central HS',
+		'Cleveland',
+		'Daly',
+		'Eastwood',
+		'Elkhart Academy',
+		'Feeser',
+		'Hawthorne',
+		'Memorial HS',
+		'North Side MS',
+		'Osolo',
+		'Pierre Moran MS',
+		'Pinewood',
+		'Riverview',
+		'Roosevelt',
+		'West Side MS',
+		'Woodland',
 	);
 
 	?>
