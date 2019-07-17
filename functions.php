@@ -191,7 +191,6 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 		$errors->add('user_email_error', __('<strong>ERROR</strong>: Please use a valid ECS email address to register.', 'crf') );
 	}
 
-	// TODO: Add user names into the DB correctly
 	// Sanitize the text inputs
 	if ( empty( $_POST['first_name'] ) || ! empty( $_POST['first_name'] ) && trim( $_POST['first_name'] ) == '' ) {
 		$errors->add( 'first_name_error', sprintf('<strong>%s</strong>: %s',__( 'ERROR', 'understrap' ),__( 'You must include a first name.', 'understrap' ) ) );
@@ -403,64 +402,64 @@ add_action('admin_footer-post.php', 'eefss_append_post_status');
 function eefss_append_post_status() {
 
 	global $wp_post_statuses, $post;
-		// Get all non-builtin post status and add them as <option>
-		$options = $display = '';
-		foreach ( $wp_post_statuses as $status )
+	// Get all non-builtin post status and add them as <option>
+	$options = $display = '';
+	foreach ( $wp_post_statuses as $status )
+	{
+		if ( ! $status->_builtin )
 		{
-			if ( ! $status->_builtin )
-			{
-				// Match against the current posts status
-				$selected = selected( $post->post_status, $status->name, false );
-				// If we one of our custom post status is selected, remember it
-				$selected AND $display = $status->label;
-				// Build the options
-				$options .= "<option{$selected} value='{$status->name}'>{$status->label}</option>";
-			}
+			// Match against the current posts status
+			$selected = selected( $post->post_status, $status->name, false );
+			// If we one of our custom post status is selected, remember it
+			$selected AND $display = $status->label;
+			// Build the options
+			$options .= "<option{$selected} value='{$status->name}'>{$status->label}</option>";
 		}
-		?>
-		<script type="text/javascript">
-			jQuery( document ).ready( function($) 
+	}
+	?>
+	<script type="text/javascript">
+		jQuery( document ).ready( function($) 
+		{
+			let appended = false;
+
+			<?php
+			// Add the selected post status label to the "Status: [Name] (Edit)" 
+			if ( ! empty( $display ) ) : 
+			?>
+				$( '#post-status-display' ).html( '<?php echo $display; ?>' )
+			<?php 
+			endif; 
+			// Add the options to the <select> element
+			?>
+			$( '.edit-post-status' ).on( 'click', function()
 			{
-				let appended = false;
-
-				<?php
-				// Add the selected post status label to the "Status: [Name] (Edit)" 
-				if ( ! empty( $display ) ) : 
-				?>
-					$( '#post-status-display' ).html( '<?php echo $display; ?>' )
-				<?php 
-				endif; 
-				// Add the options to the <select> element
-				?>
-				$( '.edit-post-status' ).on( 'click', function()
-				{
-					if(!appended) {
-						let select = $( '#post-status-select' ).find( 'select' );
-						$( select ).append( "<?php echo $options; ?>" );
-						appended = true;
-					
-					}
-					
-				} );
-
-				$( '.save-post-status ').on('click', function() {
-					let select = $('#post-status-select').find('select').val();
-					console.log(select);
-					switch(select){
-						case('requested'):
-							$('#save-post').val('Set Requested Status');
-							break;
-						case('completed'):
-							$('#save-post').val('Mark as Complete');
-							break;
-						default:
-							$('#save-post').val('Save');
-					}
-				})
+				if(!appended) {
+					let select = $( '#post-status-select' ).find( 'select' );
+					$( select ).append( "<?php echo $options; ?>" );
+					appended = true;
+				
+				}
+				
 			} );
-		</script>
-		<?php
-	};
+
+			$( '.save-post-status ').on('click', function() {
+				let select = $('#post-status-select').find('select').val();
+				console.log(select);
+				switch(select){
+					case('requested'):
+						$('#save-post').val('Set Requested Status');
+						break;
+					case('completed'):
+						$('#save-post').val('Mark as Complete');
+						break;
+					default:
+						$('#save-post').val('Save');
+				}
+			})
+		} );
+	</script>
+	<?php
+};
 
 /** Create the custom user roles **/
 add_action( 'init', 'eefss_add_custom_roles' );
