@@ -461,6 +461,44 @@ function eefss_append_post_status() {
 	<?php
 };
 
+/** Add custom bulk options to warehouse item list **/
+add_filter('bulk_actions-edit-eefss_warehouse_ad', 'eefss_warehouse_bulk_actions');
+function eefss_warehouse_bulk_actions($bulk_array) {
+	$bulk_array['eefss_mark_complete'] = 'Mark as Complete';
+
+	return $bulk_array;
+}
+
+add_filter('handle_bulk_actions-edit-eefss_warehouse_ad', 'eefss_handle_warehouse_bulk_actions', 10, 3);
+function eefss_handle_warehouse_bulk_actions($redirect, $action, $obj_ids) {
+	// remove redirects
+	$redirect = remove_query_arg( array( 'eefss_mark_completed_done' ), $redirect );
+
+	if($action == 'eefss_mark_completed') {
+		foreach($obj_ids as $post_id) {
+			wp_update_post(array( 
+				'ID' => $post_id,
+				'post_status' => 'completed',
+			));
+		}
+
+		$redirect = add_query_arg( 'eefss_mark_completed_done', count( $object_ids ), $redirect );
+
+	}
+
+	return $redirect;
+}
+
+/** Show a notice after the posts have been updated **/
+add_action('admin_notices', 'eefss_notify_bulk_update');
+function eefss_notify_bulk_update() {
+	if ( ! empty( $_REQUEST['eefss_mark_completed_done'] ) ) {
+		echo '<div id="message" class="updated notice is-dismissible">
+			<p>Posts updated.</p>
+		</div>';
+	}
+}
+
 /** Create the custom user roles **/
 add_action( 'init', 'eefss_add_custom_roles' );
 function eefss_add_custom_roles() {
