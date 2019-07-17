@@ -120,9 +120,18 @@ function eefss_register_form() {
 
 	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
 
+	$first_name = ( ! empty( $_POST['first_name'] ) ) ? sanitize_text_field( $_POST['first_name'] ) : '';
+	$last_name = ( ! empty($_POST['last_name'] ) ) ? sanitize_text_field( $_POST['last_name' ]) : '';
+
 	?>
 
 	<p>
+		<label for="first_name"><?php esc_html_e( 'First Name', 'crf'); ?><br />
+		<input type="text" id="first-name" name="first_name" class="input" value="<?php echo esc_attr( $first_name ); ?>" />
+
+		<label for="last_name"><?php esc_html_e( 'Last Name', 'crf'); ?><br />
+		<input type="text" id="last-name" name="last_name" class="input" value="<?php echo esc_attr(  $last_name  ); ?>" />
+
 		<label for="building"><?php esc_html_e( 'Building', 'crf' ) ?><br/>
 			<select
 			       id="building"
@@ -149,21 +158,21 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 		'Beardsley',
 		'Beck',
 		'Bristol',
-		'Central HS',
+		'Central',
 		'Cleveland',
 		'Daly',
 		'Eastwood',
 		'Elkhart Academy',
 		'Feeser',
 		'Hawthorne',
-		'Memorial HS',
-		'North Side MS',
+		'Memorial',
+		'North Side',
 		'Osolo',
-		'Pierre Moran MS',
+		'Pierre Moran',
 		'Pinewood',
 		'Riverview',
 		'Roosevelt',
-		'West Side MS',
+		'West Side',
 		'Woodland',
 	);
 
@@ -182,6 +191,16 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 		$errors->add('user_email_error', __('<strong>ERROR</strong>: Please use a valid ECS email address to register.', 'crf') );
 	}
 
+	// TODO: Add user names into the DB correctly
+	// Sanitize the text inputs
+	if ( empty( $_POST['first_name'] ) || ! empty( $_POST['first_name'] ) && trim( $_POST['first_name'] ) == '' ) {
+		$errors->add( 'first_name_error', sprintf('<strong>%s</strong>: %s',__( 'ERROR', 'understrap' ),__( 'You must include a first name.', 'understrap' ) ) );
+	}
+
+	if ( empty( $_POST['last_name'] ) || ! empty( $_POST['last_name'] ) && trim( $_POST['last_name'] ) == '' ) {
+		$errors->add( 'last_name_error', sprintf('<strong>%s</strong>: %s',__( 'ERROR', 'understrap' ),__( 'You must include a last name.', 'understrap' ) ) );
+	}
+
 	return $errors;
 }
 
@@ -193,21 +212,21 @@ function eefss_user_register( $user_id ) {
 		'Beardsley',
 		'Beck',
 		'Bristol',
-		'Central HS',
+		'Central',
 		'Cleveland',
 		'Daly',
 		'Eastwood',
 		'Elkhart Academy',
 		'Feeser',
 		'Hawthorne',
-		'Memorial HS',
-		'North Side MS',
+		'Memorial',
+		'North Side',
 		'Osolo',
-		'Pierre Moran MS',
+		'Pierre Moran',
 		'Pinewood',
 		'Riverview',
 		'Roosevelt',
-		'West Side MS',
+		'West Side',
 		'Woodland',
 	);
 
@@ -219,6 +238,14 @@ function eefss_user_register( $user_id ) {
 	// Validate the building submission one last time
 	if ( ! empty( $_POST['building'] ) && in_array(strval( $_POST['building'] ), $allowed, true) ) {
 		update_user_meta( $user_id, 'building', strval( $_POST['building'] ) );
+	}
+
+	if ( ! empty( $_POST['first_name'] ) ) {
+		update_user_meta( $user_id, 'first_name', sanitize_text_field( $_POST['first_name'] ) );
+	}
+
+	if ( ! empty( $_POST['last_name'] ) ) {
+		update_user_meta( $user_id, 'last_name', sanitize_text_field( $_POST['last_name'] ) );
 	}
 
 }
