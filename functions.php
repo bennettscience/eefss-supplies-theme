@@ -71,6 +71,7 @@ function eefss_request_item_callback() {
 	$date = new DateTime();
 
 	// TODO: validate the current status of the item
+	// TODO: handle error if the item is already requested (race conditions)
 	if($request === 'request_item') {
 		// get the ACF for the post
 		update_field('requested', true, intval($post_id));
@@ -88,9 +89,9 @@ function eefss_request_item_callback() {
 	wp_die();
 }
 
-/*******************************/
-/** USER REGISTRATION SCRIPTS **/
-/*******************************/
+/***********************/
+/** USER REGISTRATION **/
+/***********************/
 
 /** Custom user registration form */
 add_action('register_form', 'eefss_register_form');
@@ -262,6 +263,7 @@ function eefss_redirect_user_on_logout() {
 	exit();
 }
 
+/** Create appropriate nav menus for login conditions **/
 add_action('admin_init', 'eefss_main_nav_menus',20,2);
 function eefss_main_nav_menus() {
 	$logged_in_menu = 'logged-in';
@@ -317,6 +319,7 @@ function eefss_main_nav_menus() {
 	}
 }
 
+/** Check the current user's login status and return the correct menu **/
 add_filter('wp_nav_menu_args', 'eefss_user_login_check');
 function eefss_user_login_check($args = '') {
 	if( is_user_logged_in() ) { 
@@ -328,10 +331,11 @@ function eefss_user_login_check($args = '') {
 }
 
 
+/** Show the user's location as a field in the Profile page **/
+// TODO: Convert location display into dropdown in case a user needs to update the field.
 add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
 add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
 function eefss_show_extra_profile_fields( $user ) {
-	// TODO: Convert location display into dropdown in case a user needs to update the field.
 
 	$allowed = array(
 		'Beardsley',
@@ -367,9 +371,9 @@ function eefss_show_extra_profile_fields( $user ) {
 	<?php
 }
 
-/**********************************/
-/** CUSTOM STATUSES, POSTS, ROLES */
-/**********************************/
+/**********************************************/
+/** CUSTOM STATUSES, POSTS, CATEGORIES, ROLES */
+/**********************************************/
 
 /** Register a custom 'Requested' and 'Complete' post status */
 add_action( 'init', 'eefss_custom_requested_status' );
@@ -396,7 +400,6 @@ function eefss_custom_requested_status() {
 }
 
 //TODO: custom statuses in quick edit
-//TODO: custom statuses in bulk edit
 /** Add the post statuses to the admin menus **/
 add_action('admin_footer-post.php', 'eefss_append_post_status');
 function eefss_append_post_status() {
@@ -469,6 +472,7 @@ function eefss_warehouse_bulk_actions($bulk_array) {
 	return $bulk_array;
 }
 
+/** Handle the action submit when using the bulk edit menu **/
 add_filter('handle_bulk_actions-edit-eefss_warehouse_ad', 'eefss_handle_warehouse_bulk_actions', 10, 3);
 function eefss_handle_warehouse_bulk_actions($redirect, $action, $obj_ids) {
 	// remove redirects
@@ -549,6 +553,7 @@ function eefss_register_community_ads() {
 			'author',
 		),
 		'hierarchical' => false,
+		'publicly_queryable' => true,
 		'public' => true,
 		'show_ui' => true,
 		'show_in_menu' => true,
@@ -585,11 +590,12 @@ function eefss_register_warehouse_ads() {
 		'supports' => array(
             'title',
             'editor',
-            'revisions',
 			'custom-fields',
 			'thumbnail',
+			'post-formats'
 		),
-		'hierarchical' => false,
+		'hierarchical' => true,
+		'publicly_queryable' => true,
 		'public' => true,
 		'show_ui' => true,
 		'show_in_menu' => true,
@@ -597,6 +603,7 @@ function eefss_register_warehouse_ads() {
 		'has_archive' => true,
 		'rewrite' => true,
 		'capability_type' => array('eefss_warehouse_ad', 'eefss_warehouse_ads'),
+		'taxonomies' => array('category', 'post_tag'),
 		'map_meta_cap' => true,
 	);
     register_post_type('eefss_warehouse_ad', $args);
@@ -642,6 +649,36 @@ function eefss_add_teacher_caps() {
 		$role->add_cap( 'edit_published_eefss_community_ads' );
 
 }
+
+/** Add default categories on theme activation **/
+// TODO: Add default categories
+// add_action('init', 'eefss_register_default_categories');
+// function eefss_register_default_categories() {
+// 	$cats = array(
+// 		array(
+// 			'Consumables',
+// 			'category',
+// 			array(
+// 				'description' => 'Items that are used once, like pencils, pens, erasers, etc.',
+// 				'slug' => 'consumables'
+// 			),
+// 		),
+// 		array(
+// 			'Furniture',
+// 			'category',
+// 			array(
+// 				'description' => 'All things furniture. Big and small.',
+// 				'slug' => 'furniture',
+// 			),
+// 		),
+// 	);
+
+// 	foreach($cats as $the_cat) {
+// 		if( !term_exists($the_cat) ) {
+// 			wp_insert_term($the_cat);
+// 		}
+// 	}
+// }
 
 /******************************/
 /** DASHBOARD CUSTOMIZATIONS **/
@@ -696,7 +733,7 @@ function posts_for_current_author($query) {
 /** Add dashboard metaboxes for users based on role **/
 add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
-	if(!current_user_can('eefss_teacher')) {
+	if(current_user_can('eefss_manager')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
@@ -704,13 +741,15 @@ function eefss_dashboard_meta_boxes() {
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 		remove_meta_box('dashboard_quick_press', 'dashboard', 'side');
 
-	} else {
+	} elseif(current_user_can('eefss_teacher')) {
 		add_meta_box('user-community-ads', __('Your Ads'), 'eefss_teacher_dash_meta_display', 'dashboard', 'normal', 'high');
 		add_meta_box('eefss-requested-items', __('Warehouse Requests'), 'eefss_teacher_dash_requests', 'dashboard', 'side');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
 		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
+	} else {
+		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
 	}
 }
 
@@ -740,12 +779,14 @@ function eefss_manager_dash_meta_display($data) {
 	?>
 		<table>
 			<thead>
-				<th>Active Warehouse Ads</th>
-				<th>Pending Warehouse Requests</th>
-				<th>Community Ads</th>
-				<th>Pending Community Posts</th>
+				<tr>
+					<th>Active Warehouse Ads</th>
+					<th>Pending Warehouse Requests</th>
+					<th>Community Ads</th>
+					<th>Pending Community Posts</th>
+				</tr>
 			</thead>
-			<tbody style="font-size:32px;">
+			<tbody style="font-size:32px; text-align:center;">
 				<td>
 					<?php echo wp_count_posts('eefss_warehouse_ad')->publish; ?>
 				</td>
@@ -780,18 +821,20 @@ function eefss_teacher_dash_meta_display($data) {
 
 	?>
 
-	<table>
-		<thead>
-			<th>Title</th>
-			<th>Posted On</th>
-			<th>Views</th>
+	<table style="border-spacing:25px 5px; border-collapse:separate">
+		<thead style="font-size:18px; text-align:left;">
+			<tr>
+				<th>Title</th>
+				<th>Posted On</th>
+				<th>Views</th>
+			</tr>
 		</thead>
-		<tbody>
+		<tbody style="text-align:center;">
 
 		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<tr>
 				<td>
-					<?php the_title(); ?>
+					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
 				</td>
 				<td>
 					<?php the_time( get_option( date_format ) ); ?>
@@ -826,8 +869,8 @@ function eefss_teacher_dash_requests($data) {
 
 	?>
 
-	<table>
-		<thead>
+	<table style="border-spacing:25px 5px; border-collapse:separate;">
+		<thead style="font-size:18px;text-align:left;">
 			<th>Title</th>
 			<th>Status</th>
 		</thead>
@@ -870,7 +913,7 @@ function eefss_set_post_view() {
     update_post_meta( $post_id, $key, $count );
 }
 
-/** Set a 'Views' column in the admin post list **/
+/** Add custom columns in the admin post list **/
 function eefss_posts_column_views( $columns ) {
 	$columns['post_views'] = 'Views';
 	$columns['requested_by'] = 'Requested By';
@@ -887,5 +930,82 @@ function eefss_posts_custom_column_views( $column ) {
 		$user_email = get_field('requested_by', $post->ID);
 
 		echo $user_email;
+	}
+}
+
+/** Add ACF meta shortcode **/
+add_shortcode( 'post-data', 'eefss_post_acf_data' );
+function eefss_post_acf_data() {
+	global $post;
+
+	$the_post = get_post();
+
+	// Get the post metadata
+	$post_id = $the_post->ID;
+	$author_id = $the_post->post_author;
+	
+	$author = get_userdata($author_id);
+
+	$acf_data = get_fields($the_post->ID);
+
+	$string = "<div class='eefss_community_ad_data'>
+		<div class='name'>" . $author->first_name . ' ' . $author->last_name . "</div>
+		<div class='building'>" . $author->building . "</div>
+		<h4>About " . $author->first_name . "</h4>
+		<div class='about'>" . $author->description . "</div>
+		<hr />
+		<h4>Project Details</h4>
+		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
+		<a class='btn btn-secondary' id='listing-" . $post_id . "' href='#'>Contact " . $author->first_name . "</a>
+	</div>";
+
+	return $string;
+}
+
+add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
+function eefss_warehouse_acf_data() {
+	global $post;
+
+	$the_post = get_post();
+
+	$acf_data = get_fields($the_post->ID);
+
+	$string = "<div class='eefss_warehouse_ad_data'>
+		<div class='avail-quant'>Available: " . $acf_data['quantity'] . "</div>
+		<div class='unit-quant'>Unit quantity: " . $acf_data['unit_quantity'] . "</div>
+	</div>";
+
+	return $string;
+}
+
+add_shortcode( 'author-data', 'eefss_author_posts' );
+function eefss_author_posts() {
+	global $wpdb, $post;
+
+	$author_id = $post->post_author;
+	$author = get_userdata($author_id);
+
+	$query = new WP_Query(array(
+		'post_type' => 'eefss_community_ad',
+		'author' => $author_id,
+		'orderby' => 'post_date',
+		'order' => 'ASC',
+		'numberposts' => 5
+	));
+
+	?>
+	<h4>More by <?php echo $author->first_name; ?></h4>
+	<hr />
+	<ol>
+	<?php
+
+	if($query->have_posts()) {
+	
+		while($query->have_posts()) : $query->the_post() ?>
+
+			<li><a href='<?php the_permalink(); ?>'><?php the_title(); ?></a></li>
+
+	<?php endwhile;
+
 	}
 }
