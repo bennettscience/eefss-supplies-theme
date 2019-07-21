@@ -34,7 +34,7 @@ $container = get_theme_mod( 'understrap_container_type' );
                     <?php
                     $args = array(
                           'child_of'            => 0,
-                          'current_category'    => 0,
+                          'current_category'    => 1,
                           'depth'               => 0,
                           'echo'                => 1,
                           'exclude'             => '',
@@ -53,10 +53,9 @@ $container = get_theme_mod( 'understrap_container_type' );
                           'show_option_none'    => __( 'No categories' ),
                           'style'               => 'list',
                           'taxonomy'            => 'category',
-                          'title_li'            => __( 'Categories' ),
-                          'use_desc_for_title'  => 1,
+                          'use_desc_for_title'  => 0,
                         );
-                        
+
                         $categories = wp_list_categories($args);
 
                         foreach($categories as $cat) {
