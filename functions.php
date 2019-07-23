@@ -65,28 +65,69 @@ function eefss_request_item_callback() {
 	$request = $_POST['action'];
 	$user_id = $_POST['user_id'];
 	$post_id = $_POST['post_id'];
+	$quant = $_POST['quant'];
 
 	$user = get_user_by('id', intval($user_id));
 
 	$date = new DateTime();
 
-	// TODO: validate the current status of the item
-	// TODO: handle error if the item is already requested (race conditions)
+	// Check the action key and run the appropriate function.
+
 	if($request === 'request_item') {
-		// get the ACF for the post
-		update_field('requested', true, intval($post_id));
-		update_field('requested_by', $user->user_email, intval($post_id));
-		update_field('requested_on', $date->format('m-d-Y'), intval($post_id));
 
-		$update = array(
-			'ID' => intval($post_id),
-			'post_status' => 'requested',
-		);
+		// Subtract the requested quantity from the total available
+		$available = get_field('quantity', $post_id, true);
 
-		wp_update_post($update);
+		$available = intval($available) - intval($quant);
+
+		if(intval($available) < 0) {
+			// If the user requested too many items somehow, return an error.
+
+			header('HTTP/1.1 500 Internal Error');
+        	header('Content-Type: application/json; charset=UTF-8');
+			wp_die(json_encode(array('message' => 'ERROR - You requested more items than were available. Please update your quantity and try again.', 'value' => $available)));
+			
+		} elseif(intval($available) == 0) {
+
+			$row = array(
+				'requested_by' => $user->user_email,
+				'requested_quantity' => $quant,
+				'requested_date' => $date->format('m-d-Y'),
+				'completed' => 0,
+				'completed_date' => '',
+			);
+
+			add_row('requests', $row, intval($post_id));
+
+			// If there are none left, set `expired` to true
+			update_field('expired', 1, intval($post_id));
+			update_field('quantity', $available, intval($post_id));
+
+			// Update the post status to `expired` and remove it from the query results
+			$update = array(
+				'ID' => intval($post_id),
+				'post_status' => 'expired',
+			);
+
+			wp_update_post($update);
+
+		} else {
+			// There is more available. Set the new quantity and return.
+			$row = array(
+				'requested_by' => $user->user_email,
+				'requested_quantity' => $quant,
+				'requested_date' => $date->format('m-d-Y'),
+				'completed' => 0,
+				'completed_date' => '',
+			);
+
+		add_row('requests', $row, intval($post_id));
+			// There are some left, so subtract and return an updated quantity
+			update_field('quantity', intval($available), intval($post_id));
+		}
 	}
 
-	wp_die();
+	wp_die(json_encode(array('message' => 'SUCCESS - Your request has been filed.', 'value' => $available)));
 }
 
 /***********************/
@@ -971,7 +1012,7 @@ function eefss_warehouse_acf_data() {
 	$acf_data = get_fields($the_post->ID);
 
 	$string = "<div class='eefss_warehouse_ad_data'>
-		<div class='avail-quant'>Available: " . $acf_data['quantity'] . "</div>
+		<div id='avail-quant'>" . $acf_data['quantity'] . "</div>
 		<div class='unit-quant'>Unit quantity: " . $acf_data['unit_quantity'] . "</div>
 	</div>";
 
