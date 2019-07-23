@@ -658,6 +658,19 @@ function eefss_register_warehouse_ads() {
     register_post_type('eefss_warehouse_ad', $args);
 }
 
+/** Include custom posts in the search results **/
+add_filter( 'pre_get_posts', 'eefss_site_search' );
+function eefss_site_search( $query ) {
+	
+    if ( $query->is_search ) {
+		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad' ) );
+		$query->set( 'post_status', array( 'publish' ) );
+    }
+    
+    return $query;
+    
+}
+
 /** Add role capabilities for managers **/
 add_action('init', 'eefss_add_manager_role_caps');
 function eefss_add_manager_role_caps() {
