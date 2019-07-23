@@ -610,6 +610,7 @@ function eefss_register_community_ads() {
 		'rewrite' => true,
 		'has_archive' => true,
 		'capability_type' => array('eefss_community_ad', 'eefss_community_ads'),
+		'taxonomies' => array('category'),
 		'map_meta_cap' => true,
 	);
     register_post_type('eefss_community_ad', $args);
@@ -652,7 +653,7 @@ function eefss_register_warehouse_ads() {
 		'has_archive' => true,
 		'rewrite' => true,
 		'capability_type' => array('eefss_warehouse_ad', 'eefss_warehouse_ads'),
-		'taxonomies' => array('category', 'post_tag'),
+		'taxonomies' => array('category'),
 		'map_meta_cap' => true,
 	);
     register_post_type('eefss_warehouse_ad', $args);
@@ -669,6 +670,20 @@ function eefss_site_search( $query ) {
     
     return $query;
     
+}
+
+/** Include custom post types in the Category view **/
+add_filter('pre_get_posts', 'eefss_query_post_type');
+function eefss_query_post_type($query) {
+  if( is_category() ) {
+    $post_type = get_query_var('post_type');
+    if($post_type)
+        $post_type = $post_type;
+    else
+        $post_type = array('nav_menu_item', 'eefss_warehouse_ad', 'eefss_community_ad');
+    $query->set('post_type',$post_type);
+    return $query;
+    }
 }
 
 /** Add role capabilities for managers **/
