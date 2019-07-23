@@ -29,16 +29,25 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php the_content(); ?>	
 
-		<button id="request-item-btn" data-id="<?php the_ID(); ?>">Request Item</button>
+		<?php if(get_post_type() == 'eefss_warehouse_ad') {
+			$quant = get_field('quantity');
 
-		<?php
+			echo '<input id="quant" type="number" min="1" max="' . $quant . '" value="" />';
+
+			echo '<a class="btn btn-secondary" id="request-item-btn" data-toggle="modal" data-target="#requestConfirm" data-id="'. $post->ID .'">Request Item</a>';
+			echo '<span id="response"></span>';
+
+		}
+		?>	
+
+		<!-- <?php
 		wp_link_pages(
 			array(
 				'before' => '<div class="page-links">' . __( 'Pages:', 'understrap' ),
 				'after'  => '</div>',
 			)
 		);
-		?>
+		?> -->
 
 	</div><!-- .entry-content -->
 
