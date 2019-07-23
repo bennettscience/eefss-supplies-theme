@@ -121,9 +121,17 @@ function eefss_request_item_callback() {
 				'completed_date' => '',
 			);
 
-		add_row('requests', $row, intval($post_id));
+			add_row('requests', $row, intval($post_id));
 			// There are some left, so subtract and return an updated quantity
 			update_field('quantity', intval($available), intval($post_id));
+
+			// Mark the post as `requested` to filter into the admin dashboard
+			$update = array(
+				'ID' => intval($post_id),
+				'post_status' => 'requested',
+			);
+
+			wp_update_post($update);
 		}
 	}
 
@@ -429,14 +437,14 @@ function eefss_custom_requested_status() {
 		'label_count'               => _n_noop( 'Requested (%s)', 'Requested (%s)' ),
 	) );
 
-	register_post_status( 'completed', array(
-		'label' 					=> _x('Completed', 'post'),
+	register_post_status( 'expired', array(
+		'label' 					=> _x('Expired', 'post'),
 		'post_type'					=> 'eefss_warehouse_ad',
 		'public' 					=> true,
 		'exclude_from_search' 		=> false,
 		'show_in_admin_all_list' 	=> true,
 		'show_in_admin_status_list' => true,
-		'label_count' 				=> _n_noop( 'Completed (%s)', 'Completed (%s)'),
+		'label_count' 				=> _n_noop( 'Expired (%s)', 'Expired (%s)'),
 	));
 }
 
@@ -803,17 +811,8 @@ function eefss_manager_dash_meta_display($data) {
 	$warehouse_query = new WP_Query(array(
 		'post_type' => 'eefss_warehouse_ad',
 		'post_status' => 'requested',
-		'meta_query' => array(
-			'relation' => "AND",
-			array(
-				'key' => 'requested',
-				'value' => 1,  // True/False ACF field stored as int
-			),
-			array(
-				'key' => 'complete',
-				'value' => 0,
-			),
-		),
+		'meta_key' => 'expired',
+		'meta_value' => 0,
 	));
 
 	// Build a table
