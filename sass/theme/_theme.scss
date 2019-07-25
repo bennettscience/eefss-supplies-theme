@@ -1,5 +1,57 @@
 // This is an empty scss file for your custom styles - Please add your super duper awesome mega design styles here
 
+@import url('https://fonts.googleapis.com/css?family=Open+Sans|Sanchez&display=swap');
+
+body {
+    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+
+}
+
+a {
+    color: $secondary;
+}
+
+h1, h2, h3, h4, h5, h6 { 
+    font-family: 'Sanchez', 'Times New Roman', Times, serif;
+    font-weight: 600;
+}
+
+.headline {
+    a {
+        color: $primary !important;
+    }
+}
+
+.cat-block, .new-request {
+    padding: 10px 10px 0 0;
+    .well {
+        padding: 10px;
+        height: 100%;
+    }
+}
+
+.cat-block {
+    .well {
+        span {
+            display: block;
+        }
+    }
+}
+
 .bg-primary {
     background-color: $primary;
+}
+
+table {border:0; border-collapse:separate; border-spacing:0 5px;}
+thead tr th{border-bottom: 1px solid black; border-collapse:separate; border-spacing:5px 5px;}
+
+#user-community-ads table {
+    text-align:left;
+    font-size:16px;
+}
+
+#request-item-btn {
+    background-color: $secondary;
+    color: #fff;
+    padding: 5px 10px;
 }
