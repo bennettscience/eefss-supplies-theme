@@ -32,35 +32,33 @@ $container = get_theme_mod( 'understrap_container_type' );
                     <?php get_template_part( 'searchform' ); ?>
 
                     <?php
-                    $args = array(
-                          'child_of'            => 0,
-                          'current_category'    => 1,
-                          'depth'               => 0,
-                          'echo'                => 1,
-                          'exclude'             => '',
-                          'exclude_tree'        => '',
-                          'feed'                => '',
-                          'feed_image'          => '',
-                          'feed_type'           => '',
-                          'hide_empty'          => 0,
-                          'hide_title_if_empty' => false,
-                          'hierarchical'        => true,
-                          'order'               => 'ASC',
-                          'orderby'             => 'name',
-                          'separator'           => '<br />',
-                          'show_count'          => 0,
-                          'show_option_all'     => '',
-                          'show_option_none'    => __( 'No categories' ),
-                          'style'               => 'list',
-                          'taxonomy'            => 'category',
-                          'use_desc_for_title'  => 0,
+                      $args = array(
+                        'taxonomy' => 'category',
+                        'parent' => 0,
+                        'order'               => 'ASC',
+                        'orderby'             => 'name',
+                        'hide_empty' => false,
+                      );
+
+                      $categories = get_terms($args);
+
+                      foreach($categories as $cat) {
+                        echo '<div id="cat-' . $cat->term_id . '">' . $cat->name;
+
+                        $subargs = array(
+                          'taxonomy' => 'category',
+                          'parent' => $cat->term_id,
+                          'hide_empty' => false,
                         );
 
-                        $categories = wp_list_categories($args);
+                        $subs = get_terms($subargs);
 
-                        foreach($categories as $cat) {
-                            echo '<div class="col-md-4"><a href="' . get_category_link($category->term_id) . '">' . $category->name . '</a></div>';
+                        foreach($subs as $subcat) {
+                          echo '<span id="cat-' . $cat->term_id . '-sub-' . $subcat->term_id .'">' . $subcat->name . '</span>';
                         }
+
+                        echo '</div>';
+                      }
                     ?>
 
 				</main><!-- #main -->
