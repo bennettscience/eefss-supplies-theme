@@ -25,12 +25,12 @@ $container = get_theme_mod( 'understrap_container_type' );
 		<div class="row">
 
 			<div class="col-md-12 content-area" id="primary">
-
-                <main class="site-main" id="main" role="main">
-
-                  <div class="row">
+          
+              <main class="site-main home-only" id="main" role="main">
+                  
+                <div class="row search justify-content-center">
                     
-                    <div class="col-lg-12">
+                    <div class="col-lg-8">
                     
                       <?php get_template_part( 'searchform' ); ?>
                     
@@ -125,7 +125,8 @@ $container = get_theme_mod( 'understrap_container_type' );
 
 			</div><!-- #primary -->
 
-		</div><!-- .row end -->
+    </div><!-- .row end -->
+
 
 	</div>
 

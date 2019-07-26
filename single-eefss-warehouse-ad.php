@@ -24,6 +24,7 @@ $container = get_theme_mod( 'understrap_container_type' );
 			<main class="site-main" id="main">
 
 				<?php while ( have_posts() ) : the_post(); ?>
+					
 					<?php eefss_set_post_view(); ?>
 
 					<?php get_template_part( 'loop-templates/content', 'single' ); ?>

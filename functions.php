@@ -138,6 +138,31 @@ function eefss_request_item_callback() {
 	wp_die(json_encode(array('message' => 'SUCCESS - Your request has been filed.', 'remaining' => $available)));
 }
 
+add_action( 'query_vars', 'eefss_add_query_vars' );
+function eefss_add_query_vars( $vars ) {
+	$vars[] = 'request';
+	$vars[] = 'auth';
+
+	return $vars;
+}
+
+/** Capture the teacher contact form input and redirect **/
+add_action( 'ninja_forms_submission_actions', 'eefss_redirect_on_form_submit' );
+function eefss_redirect_on_form_submit( $data ) {
+
+	global $ninja_forms_processing;
+	
+	foreach( $data['fields'] as $field ) {
+		if( $field['key'] == 'type') {
+			if($field['value'] === 'financial' ) {
+				$url = "https://elkharteducationfoundation.networkforgood.com/projects/37979-make-a-gift-today?donate_designation_id=13308";
+				$ninja_forms_processing->update_form_setting( 'landing_page', $url)->save();
+			}
+		}
+	}
+}
+
+
 /***********************/
 /** USER REGISTRATION **/
 /***********************/
@@ -812,6 +837,7 @@ add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
 	if(current_user_can('eefss_manager')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
+		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
 		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
@@ -827,10 +853,41 @@ function eefss_dashboard_meta_boxes() {
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 	} else {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
+		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
+
 	}
 }
 
+function eefss_manager_form_submissions($data) {
+
+	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
+
+	?>
+	<div>
+
+	<?php 
+
+	$nf = new Ninja_Forms();
+
+	$forms = $nf->form()->get_forms();
+
+	foreach($forms as $form) {
+		$subs = $nf->form( $form->get_id() )->get_subs();
+
+		echo '<pre>' . $form->get_setting( 'title' ) . ' &npsp; ' . count($subs) . '</pre>';
+
+	}
+
+	?>
+	</div>
+
+	<?php
+
+	wp_reset_query();
+}
+
 /** Define metabox for Manager role on dashboard **/
+// TODO: Add form submit meta boxes
 function eefss_manager_dash_meta_display($data) {
 
 	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
@@ -868,6 +925,8 @@ function eefss_manager_dash_meta_display($data) {
 			</tbody>
 		</table>
 	<?php
+	wp_reset_query();
+
 
 }
 
@@ -895,7 +954,7 @@ function eefss_teacher_dash_meta_display($data) {
 				<th>Views</th>
 			</tr>
 		</thead>
-		<tbody style="text-align:center;">
+		<tbody>
 
 		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<tr>
@@ -963,7 +1022,6 @@ function eefss_teacher_dash_requests($data) {
 add_filter( 'manage_posts_columns', 'eefss_posts_column_views' );
 add_action( 'manage_posts_custom_column', 'eefss_posts_custom_column_views' );
 add_action( 'wp_dashboard_setup', 'eefss_get_post_view');
-
 /** Return the number of views a post has **/
 function eefss_get_post_view() {
     $count = get_post_meta( get_the_ID(), 'post_views_count', true );
@@ -982,20 +1040,13 @@ function eefss_set_post_view() {
 /** Add custom columns in the admin post list **/
 function eefss_posts_column_views( $columns ) {
 	$columns['post_views'] = 'Views';
-	$columns['requested_by'] = 'Requested By';
     return $columns;
 }
 
 /** Populate custom columns **/
 function eefss_posts_custom_column_views( $column ) {
-    if ( $column === 'post_views') {
+    if ( $column == 'post_views') {
         echo eefss_get_post_view();
-	}
-	if ( $column === 'requested_by' ) {
-		global $post;
-		$user_email = get_field('requested_by', $post->ID);
-
-		echo $user_email;
 	}
 }
 
@@ -1022,7 +1073,7 @@ function eefss_post_acf_data() {
 		<hr />
 		<h4>Project Details</h4>
 		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
-		<a class='btn btn-secondary' id='listing-" . $post_id . "' href='#'>Contact " . $author->first_name . "</a>
+		<a class='btn btn-secondary' id='listing-" . $post_id . "' href='http://localhost/contact?title=" . $the_post->post_title . "&auth=" . $author->user_email . "'>Contact " . $author->first_name . "</a>
 	</div>";
 
 	return $string;
@@ -1060,6 +1111,7 @@ function eefss_author_posts() {
 	));
 
 	?>
+	<div class="teacher-data">
 	<h4>More by <?php echo $author->first_name; ?></h4>
 	<hr />
 	<ol>
@@ -1074,4 +1126,9 @@ function eefss_author_posts() {
 	<?php endwhile;
 
 	}
+
+	?>
+	</div>
+
+	<?php
 }

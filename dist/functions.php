@@ -837,6 +837,7 @@ add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
 	if(current_user_can('eefss_manager')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
+		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
 		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
@@ -852,7 +853,37 @@ function eefss_dashboard_meta_boxes() {
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 	} else {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
+		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
+
 	}
+}
+
+function eefss_manager_form_submissions($data) {
+
+	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
+
+	?>
+	<div>
+
+	<?php 
+
+	$nf = new Ninja_Forms();
+
+	$forms = $nf->form()->get_forms();
+
+	foreach($forms as $form) {
+		$subs = $nf->form( $form->get_id() )->get_subs();
+
+		echo '<pre>' . $form->get_setting( 'title' ) . ' &npsp; ' . count($subs) . '</pre>';
+
+	}
+
+	?>
+	</div>
+
+	<?php
+
+	wp_reset_query();
 }
 
 /** Define metabox for Manager role on dashboard **/
@@ -894,6 +925,8 @@ function eefss_manager_dash_meta_display($data) {
 			</tbody>
 		</table>
 	<?php
+	wp_reset_query();
+
 
 }
 
@@ -921,7 +954,7 @@ function eefss_teacher_dash_meta_display($data) {
 				<th>Views</th>
 			</tr>
 		</thead>
-		<tbody style="text-align:center;">
+		<tbody>
 
 		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<tr>
@@ -989,7 +1022,6 @@ function eefss_teacher_dash_requests($data) {
 add_filter( 'manage_posts_columns', 'eefss_posts_column_views' );
 add_action( 'manage_posts_custom_column', 'eefss_posts_custom_column_views' );
 add_action( 'wp_dashboard_setup', 'eefss_get_post_view');
-
 /** Return the number of views a post has **/
 function eefss_get_post_view() {
     $count = get_post_meta( get_the_ID(), 'post_views_count', true );
@@ -1008,20 +1040,13 @@ function eefss_set_post_view() {
 /** Add custom columns in the admin post list **/
 function eefss_posts_column_views( $columns ) {
 	$columns['post_views'] = 'Views';
-	$columns['requested_by'] = 'Requested By';
     return $columns;
 }
 
 /** Populate custom columns **/
 function eefss_posts_custom_column_views( $column ) {
-    if ( $column === 'post_views') {
+    if ( $column == 'post_views') {
         echo eefss_get_post_view();
-	}
-	if ( $column === 'requested_by' ) {
-		global $post;
-		$user_email = get_field('requested_by', $post->ID);
-
-		echo $user_email;
 	}
 }
 

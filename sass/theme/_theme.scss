@@ -16,14 +16,68 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-.headline {
-    a {
-        color: $primary !important;
+#menu-item-144 {
+    border: 1px solid rgba(255,255,255,1);
+    background-color: transparent;
+    font-weight: 800;
+    color: rgba(255,255,255,0.5);
+    transition: all 0.25s ease-in-out;
+
+    &:hover {
+        background-color: rgba(255,255,255,0.9);
+        
+        
+        a {
+            color: $secondary;
+        }
     }
 }
 
+.widget {
+    margin-bottom: 45px;
+    border: 1px solid black;
+    padding: 15px;
+    border-bottom: 2px solid black;
+}
+
+// Bump the main container up in to the hero only on the landing page
+.home-only {
+    margin-top: -100px;
+    background-color: #fff !important;
+    border-top: solid 2px #efefef;
+}
+
+.site-main {
+    .search {
+        padding-top: 25px;
+    }
+}
+
+#searchform {
+    #s {
+        line-height: 36px;
+        font-size: 38px;
+    }
+
+    #searchsubmit {
+        font-size: 28px;
+    }
+    
+}
+
+.headline {
+
+    a {
+        color: $primary !important;
+    }
+
+}
+
+.categories {
+    padding: 25px;
+}
+
 .cat-block, .new-request {
-    padding: 10px 10px 0 0;
     .well {
         padding: 10px;
         height: 100%;
@@ -54,4 +108,12 @@ thead tr th{border-bottom: 1px solid black; border-collapse:separate; border-spa
     background-color: $secondary;
     color: #fff;
     padding: 5px 10px;
+}
+
+#wrapper-footer-full {
+    background-color: #404041;
+
+    p {
+        color: #fff;
+    }
 }
