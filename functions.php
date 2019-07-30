@@ -1073,7 +1073,7 @@ function eefss_post_acf_data() {
 		<hr />
 		<h4>Project Details</h4>
 		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
-		<a class='btn btn-secondary' id='listing-" . $post_id . "' href='http://localhost/contact?title=" . $the_post->post_title . "&auth=" . $author->user_email . "'>Contact " . $author->first_name . "</a>
+		<button type='button' class='btn btn-info' data-toggle='modal' data-target='#bootstrapModal'>Open Modal</button>
 	</div>";
 
 	return $string;
@@ -1109,6 +1109,8 @@ function eefss_author_posts() {
 		'order' => 'ASC',
 		'numberposts' => 5
 	));
+
+	// $string = "<div class='
 
 	?>
 	<div class="teacher-data">
