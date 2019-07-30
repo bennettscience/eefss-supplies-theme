@@ -27,7 +27,50 @@ $container = get_theme_mod( 'understrap_container_type' );
 			<div class="col-md-12 content-area" id="primary">
           
               <main class="site-main home-only" id="main" role="main">
+                                
+                <?php if(is_user_logged_in()) { ?>
+                  <div class="row search justify-content-center">
+                    
+                    <div class="col-lg-8">
+                    
+                      <?php get_template_part( 'searchform' ); ?>
+                    
+                    </div>
                   
+                  </div>
+
+                <div class="container user-message logged-in">
+                  <div class="row justify-content-center" id="acct-cta">
+                    <div class="col-lg-4">
+                      <a class="btn btn-secondary" href="<?php echo home_url( '/stock-supply-request'); ?>">Request Stock Supplies</a>
+                    </div>
+                    <div class="col-lg-4">
+                      <a class="btn btn-secondary" href="#">Post a Request</a>
+                    </div>
+                  </div>
+                </div>
+                
+                <?php } else { ?>
+                  <div class="container user-message logged-out">
+
+                  <div class="row justify-content-center">
+                    <div class="col-md-8">
+                      <h2>Create an account today</h2>
+                      <p>By creating an account, you get access to all the beneifts of the EEF Schoolhouse Supply Store:</p>
+                      <ul>
+                          <li>Request always-in-stock items.</li>
+                          <li>See special building services warehouse supplies available to staff members.</li>
+                          <li>Post requests for community help with your special projects.</li>
+                      </ul>
+                      <p>Create an account today with your ECS employee email address!</p>
+                    </div>
+                  </div>
+                  <div class="row justify-content-center"  id="acct-cta">
+                    <div class="col-md-8">
+                      <a class="btn btn-secondary" href="<?php echo home_url( '/wp-login.php?action=register' ); ?>">Create Account</a>
+                    </div>
+                  </div>
+                </div>
                 <div class="row search justify-content-center">
                     
                     <div class="col-lg-8">
@@ -38,6 +81,8 @@ $container = get_theme_mod( 'understrap_container_type' );
                   
                   </div>
 
+                <?php }; ?> 
+                  
                   <div class="categories row"> <!-- category search -->
                     <?php
                       $args = array(

@@ -40,11 +40,33 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom: 2px solid black;
 }
 
+.user-message {
+    padding: 25px;
+
+    &.logged-in {
+       text-align: center;
+    }
+    
+    #acct-cta {
+        text-align: center;
+
+        a {
+            font-size: 24px;
+        }
+    }
+}
+
+
+
+.logged-out {
+    background-color: rgba(205,92,92,0.25);
+    text-align: left;
+}
+
 // Bump the main container up in to the hero only on the landing page
 .home-only {
     margin-top: -100px;
     background-color: #fff !important;
-    border-top: solid 2px #efefef;
 }
 
 .site-main {
