@@ -171,7 +171,7 @@ function eefss_redirect_on_form_submit( $data ) {
 add_action('register_form', 'eefss_register_form');
 function eefss_register_form() {
 	
-	$allowed =get_buildings();
+	$allowed = get_buildings();
 
 	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
 
@@ -212,9 +212,9 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 	$allowed = get_buildings();
 
 	// Make sure a building is selected.
-	if ( empty( $_POST['building'] ) ) {
-		$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	}
+	// if ( empty( $_POST['building'] ) ) {
+	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
+	// }
 
 	// Validate the building input.
 	if ( ! empty( $_POST['building'] ) && !is_allowed_building(strval( $_POST['building'] ) ) ) {
@@ -245,9 +245,9 @@ function eefss_user_register( $user_id ) {
 	$allowed = get_buildings();
 
 	// Make sure a building is submitted to the DB.
-	if ( empty( $_POST['building'] ) ) {
-		$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	}
+	// if ( empty( $_POST['building'] ) ) {
+	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
+	// }
 
 	// Validate the building submission one last time
 	if ( ! empty( $_POST['building'] ) && is_allowed_building(strval( $_POST['building'] ) ) ) {
