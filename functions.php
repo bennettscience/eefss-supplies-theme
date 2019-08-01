@@ -990,30 +990,16 @@ function eefss_post_acf_data() {
 	$acf_data = get_fields($the_post->ID);
 
 	$string = "<div class='eefss_community_ad_data'>
-		<div class='name'>" . $author->first_name . ' ' . $author->last_name . "</div>
-		<div class='building'>" . $author->building . "</div>
-		<h4>About " . $author->first_name . "</h4>
+		<h2>Staff Member Info</h2>
+		<div class='info'>
+			<span class='name'>" . $author->first_name . ' ' . $author->last_name . ", <span class='building'>". $author->building . "</span>
+			<span class='assignment'>" . $author->assignment ."<span>
+		</div>
 		<div class='about'>" . $author->description . "</div>
 		<hr />
 		<h4>Project Details</h4>
-		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
-		<button type='button' class='btn btn-info' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
-	</div>";
-
-	return $string;
-}
-
-add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
-function eefss_warehouse_acf_data() {
-	global $post;
-
-	$the_post = get_post();
-
-	$acf_data = get_fields($the_post->ID);
-
-	$string = "<div class='eefss_warehouse_ad_data'>
-		<div id='avail-quant'>" . $acf_data['quantity'] . "</div>
-		<div class='unit-quant'>Unit quantity: " . $acf_data['unit_quantity'] . "</div>
+		<div class='cost'>Est. Cost: $" . $acf_data['cost_estimate'] . "</div>
+		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
 	</div>";
 
 	return $string;
@@ -1026,7 +1012,7 @@ function eefss_author_posts() {
 	$author_id = $post->post_author;
 	$author = get_userdata($author_id);
 
-	$query = new WP_Query(array(
+	$query = get_posts(array(
 		'post_type' => 'eefss_community_ad',
 		'author' => $author_id,
 		'orderby' => 'post_date',
@@ -1034,27 +1020,46 @@ function eefss_author_posts() {
 		'numberposts' => 5
 	));
 
-	// $string = "<div class='
+	$string = '<div class="teacher-data">
+		<h4>More by '. $author->first_name .'</h4>
+		<hr />
+		<ol>';
 
-	?>
-	<div class="teacher-data">
-	<h4>More by <?php echo $author->first_name; ?></h4>
-	<hr />
-	<ol>
-	<?php
+		if($query > 0) {
 
-	if($query->have_posts()) {
-	
-		while($query->have_posts()) : $query->the_post() ?>
+			foreach($query as $item) {
 
-			<li><a href='<?php the_permalink(); ?>'><?php the_title(); ?></a></li>
+				$string .= '<li><a href="'. $item->guid .'">'. $item->post_title .'</a></li>';
 
-	<?php endwhile;
+			}
 
-	}
+		};
 
-	?>
-	</div>
+	$string .= '</ol></div>';
 
-	<?php
+	return $string;
 }
+
+add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
+function eefss_warehouse_acf_data() {
+	global $post;
+
+	$the_post = get_post();
+
+	$acf_data = get_fields($the_post->ID);
+
+	$string = "
+		<div class='eefss_warehouse_ad_data'>
+			<h2>Item Details</h2>
+			<hr />
+			<div class='unit-quant'><strong>Unit quantity:</strong> " . $acf_data['unit_quantity'] . "</div>
+			<div class='avail'><strong>Stock available:</strong> 
+				<span id='avail-quant'>". $acf_data['quantity'] . "</span>
+			</div>
+			
+			<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>
+		</div>";
+
+	return $string;
+}
+
