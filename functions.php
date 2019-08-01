@@ -40,7 +40,7 @@ foreach ( $understrap_includes as $file ) {
 /** Register AJAX scripts */
 function eefss_register_request_scripts() {
 
-	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/request-handler.js' );
+	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/eefss.js' );
 	wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
 
     $local_arr = array(
@@ -171,27 +171,7 @@ function eefss_redirect_on_form_submit( $data ) {
 add_action('register_form', 'eefss_register_form');
 function eefss_register_form() {
 	
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed =get_buildings();
 
 	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
 
@@ -229,27 +209,7 @@ function eefss_register_form() {
 add_filter( 'registration_errors', 'eefss_registration_errors', 10, 3 );
 function eefss_registration_errors( $errors, $sanitized_user_login, $user_email ) {
 
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed = get_buildings();
 
 	// Make sure a building is selected.
 	if ( empty( $_POST['building'] ) ) {
@@ -257,7 +217,7 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 	}
 
 	// Validate the building input.
-	if ( ! empty( $_POST['building'] ) && !in_array(strval( $_POST['building'] ), $allowed, true ) ) {
+	if ( ! empty( $_POST['building'] ) && !is_allowed_building(strval( $_POST['building'] ) ) ) {
 		$errors->add( 'building_error', __( '<strong>ERROR</strong>: The building you submitted is not allowed. Please try again.', 'crf' ) );
 	}
 
@@ -282,27 +242,7 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 add_action( 'user_register', 'eefss_user_register' );
 function eefss_user_register( $user_id ) {
 
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed = get_buildings();
 
 	// Make sure a building is submitted to the DB.
 	if ( empty( $_POST['building'] ) ) {
@@ -310,7 +250,7 @@ function eefss_user_register( $user_id ) {
 	}
 
 	// Validate the building submission one last time
-	if ( ! empty( $_POST['building'] ) && in_array(strval( $_POST['building'] ), $allowed, true) ) {
+	if ( ! empty( $_POST['building'] ) && is_allowed_building(strval( $_POST['building'] ) ) ) {
 		update_user_meta( $user_id, 'building', strval( $_POST['building'] ) );
 	}
 
@@ -404,14 +344,9 @@ function eefss_user_login_check($args = '') {
     return $args;
 }
 
+function get_buildings() {
 
-/** Show the user's location as a field in the Profile page **/
-// TODO: Convert location display into dropdown in case a user needs to update the field.
-add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
-add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
-function eefss_show_extra_profile_fields( $user ) {
-
-	$allowed = array(
+	$buildings = array(
 		'Beardsley',
 		'Beck',
 		'Bristol',
@@ -433,6 +368,27 @@ function eefss_show_extra_profile_fields( $user ) {
 		'Woodland',
 	);
 
+	return $buildings;
+}
+
+function is_allowed_building($loc) {
+	
+	$allowed = get_buildings();
+
+	if( in_array($loc, $allowed) ) {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
+/** Show the user's location as a field in the Profile page **/
+// TODO: Convert location display into dropdown in case a user needs to update the field.
+add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
+add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
+function eefss_show_extra_profile_fields( $user ) {
+	
 	?>
 	<h3><?php esc_html_e( 'Personal Information', 'crf' ); ?></h3>
 
@@ -753,7 +709,6 @@ function eefss_add_teacher_caps() {
 }
 
 /** Add default categories on theme activation **/
-// TODO: Add default categories
 // add_action('init', 'eefss_register_default_categories');
 // function eefss_register_default_categories() {
 // 	$cats = array(
@@ -837,7 +792,6 @@ add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
 	if(current_user_can('eefss_manager')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
-		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
 		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
@@ -853,41 +807,11 @@ function eefss_dashboard_meta_boxes() {
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 	} else {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
-		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 	}
-}
-
-function eefss_manager_form_submissions($data) {
-
-	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
-
-	?>
-	<div>
-
-	<?php 
-
-	$nf = new Ninja_Forms();
-
-	$forms = $nf->form()->get_forms();
-
-	foreach($forms as $form) {
-		$subs = $nf->form( $form->get_id() )->get_subs();
-
-		echo '<pre>' . $form->get_setting( 'title' ) . ' &npsp; ' . count($subs) . '</pre>';
-
-	}
-
-	?>
-	</div>
-
-	<?php
-
-	wp_reset_query();
 }
 
 /** Define metabox for Manager role on dashboard **/
-// TODO: Add form submit meta boxes
 function eefss_manager_dash_meta_display($data) {
 
 	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
@@ -1073,7 +997,7 @@ function eefss_post_acf_data() {
 		<hr />
 		<h4>Project Details</h4>
 		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
-		<button type='button' class='btn btn-info' data-toggle='modal' data-target='#bootstrapModal'>Open Modal</button>
+		<button type='button' class='btn btn-info' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
 	</div>";
 
 	return $string;
