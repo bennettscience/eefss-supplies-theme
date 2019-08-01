@@ -27,7 +27,8 @@ $container = get_theme_mod( 'understrap_container_type' );
 
 					<div class="site-info">
 
-						<?php understrap_site_info(); ?>
+						<!-- <?php understrap_site_info(); ?> -->
+						<p>Powered by WordPress. Built by <a href="https://ohheybrian.com" target="_blank">Brian Bennett</a></p>
 					</div><!-- .site-info -->
 
 				</footer><!-- #colophon -->

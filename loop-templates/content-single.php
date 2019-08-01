@@ -29,17 +29,6 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php the_content(); ?>	
 
-		<?php if(get_post_type() == 'eefss_warehouse_ad') {
-			$quant = get_field('quantity');
-
-			echo '<input class="form-control" placeholder="1" id="quant" type="number" min="1" max="' . $quant . '" value="" />';
-
-			echo '<button class="btn btn-primary mb-2" id="request-item-btn" data-id="'. $post->ID .'">Request Item</button>';
-			echo '<span id="response"></span>';
-
-		}
-		?>	
-
 		<!-- <?php
 		wp_link_pages(
 			array(
