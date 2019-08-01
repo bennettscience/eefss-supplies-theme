@@ -32,9 +32,9 @@ defined( 'ABSPATH' ) || exit;
 		<?php if(get_post_type() == 'eefss_warehouse_ad') {
 			$quant = get_field('quantity');
 
-			echo '<input id="quant" type="number" min="1" max="' . $quant . '" value="" />';
+			echo '<input class="form-control" placeholder="1" id="quant" type="number" min="1" max="' . $quant . '" value="" />';
 
-			echo '<a class="btn btn-secondary" id="request-item-btn" data-toggle="modal" data-target="#requestConfirm" data-id="'. $post->ID .'">Request Item</a>';
+			echo '<button class="btn btn-primary mb-2" id="request-item-btn" data-id="'. $post->ID .'">Request Item</button>';
 			echo '<span id="response"></span>';
 
 		}
