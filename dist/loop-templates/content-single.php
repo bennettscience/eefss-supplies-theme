@@ -21,24 +21,13 @@ defined( 'ABSPATH' ) || exit;
 
 		</div><!-- .entry-meta -->
 
-	</header><!-- .entry-header -->
+		<hr />
 
-	<?php echo get_the_post_thumbnail( $post->ID, 'large' ); ?>
+	</header><!-- .entry-header -->
 
 	<div class="entry-content">
 
 		<?php the_content(); ?>	
-
-		<?php if(get_post_type() == 'eefss_warehouse_ad') {
-			$quant = get_field('quantity');
-
-			echo '<input id="quant" type="number" min="1" max="' . $quant . '" value="" />';
-
-			echo '<a class="btn btn-secondary" id="request-item-btn" data-toggle="modal" data-target="#requestConfirm" data-id="'. $post->ID .'">Request Item</a>';
-			echo '<span id="response"></span>';
-
-		}
-		?>	
 
 		<!-- <?php
 		wp_link_pages(
@@ -48,6 +37,12 @@ defined( 'ABSPATH' ) || exit;
 			)
 		);
 		?> -->
+
+		<?php 
+			if( has_post_thumbnail() ) {
+				echo get_the_post_thumbnail( $post->ID, 'medium' );
+			}
+		?>
 
 	</div><!-- .entry-content -->
 

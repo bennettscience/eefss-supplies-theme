@@ -30,8 +30,21 @@ $container = get_theme_mod( 'understrap_container_type' );
 					$query = new WP_Query(array(
 						'post_type' => array('eefss_warehouse_ad'),
 						'post_status' => 'publish',
-						'meta_field' => 'expired',
-						'meta_value' => 0,
+						'tax_query' => array(
+							'relation' => 'AND',
+							array(
+								'taxonomy' => 'status',
+								'field' => 'slug',
+								'terms' => array('active'),
+								'operator' => 'IN',
+							),
+							array(
+								'taxonomy' => 'status',
+								'field' => 'slug',
+								'terms' => array('request_pending', 'expired'),
+								'operator' => 'NOT IN',
+							)
+						)
 					));
 					
 			if ( $query->have_posts() ) : ?>

@@ -21,9 +21,9 @@ defined( 'ABSPATH' ) || exit;
 
 		</div><!-- .entry-meta -->
 
-	</header><!-- .entry-header -->
+		<hr />
 
-	<?php echo get_the_post_thumbnail( $post->ID, 'large' ); ?>
+	</header><!-- .entry-header -->
 
 	<div class="entry-content">
 
@@ -37,6 +37,12 @@ defined( 'ABSPATH' ) || exit;
 			)
 		);
 		?> -->
+
+		<?php 
+			if( has_post_thumbnail() ) {
+				echo get_the_post_thumbnail( $post->ID, 'medium' );
+			}
+		?>
 
 	</div><!-- .entry-content -->
 

@@ -45,7 +45,7 @@ $container = get_theme_mod( 'understrap_container_type' );
                       <a class="btn btn-secondary" href="<?php echo home_url( '/stock-supply-request'); ?>">Request Stock Supplies</a>
                     </div>
                     <div class="col-lg-4">
-                      <a class="btn btn-secondary" href="#">Post a Request</a>
+                      <a class="btn btn-secondary" href="<?php echo home_url( '/staff-request' ); ?>">Post a Request</a>
                     </div>
                   </div>
                 </div>

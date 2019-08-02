@@ -1,7 +1,8 @@
 jQuery(document).ready(function () {
 
-    // TODO: Make this an input modal (or sidebar form?)
     jQuery('#request-item-btn').click(function () {
+
+        console.log('Running...');
 
         // Validate the total quantity available before submitting
         let quant = parseInt(jQuery('#quant').val());
@@ -28,7 +29,7 @@ jQuery(document).ready(function () {
             console.table(data);
 
             // TODO: Error handling, please.
-            // TODO: Update DOM with success/failure message
+
             let response = jQuery.ajax({
                 url: ajax_object.ajaxurl,
                 type: 'post',
@@ -48,4 +49,20 @@ jQuery(document).ready(function () {
             console.log(e.message);
         }
     });
+
+    jQuery('#teacherContact').on('show.bs.modal', function() {
+        let button = jQuery(event.target);
+        let recip;
+        if(button.data('useremail')) {
+            recip = button.data('useremail');
+            console.log(`Found ${recip}`)
+        } else {
+            console.log(`Found nothing`)
+            recip = '';
+        }
+
+        let modal = jQuery(this);
+
+        modal.find('#input_3_7').val(recip);
+    })
 })

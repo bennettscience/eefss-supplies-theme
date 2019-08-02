@@ -35,9 +35,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .widget {
     margin-bottom: 45px;
-    border: 1px solid black;
+    border: 1px solid $gray;
     padding: 15px;
-    border-bottom: 2px solid black;
+    border-bottom: 2px solid $gray;
+}
+
+.complete {
+    font-weight: 700;
+    color: green;
 }
 
 .user-message {
@@ -55,8 +60,6 @@ h1, h2, h3, h4, h5, h6 {
         }
     }
 }
-
-
 
 .logged-out {
     background-color: rgba(205,92,92,0.25);
@@ -132,10 +135,63 @@ thead tr th{border-bottom: 1px solid black; border-collapse:separate; border-spa
     padding: 5px 10px;
 }
 
+.btn-outline {
+    border: 1px solid $gray;
+}
+
 #wrapper-footer-full {
-    background-color: #404041;
+    background-color: $gray;
 
     p {
         color: #fff;
     }
+}
+
+// Clean up Gravity Forms by extending Bootstrap classes
+.gform_fields {
+  @extend .list-unstyled;
+  @extend .row;
+ 
+  input, select, textarea {
+    @extend .form-control;
+  }
+ 
+  textarea {
+    height: auto;
+  }
+ 
+}
+ 
+.gfield_description {
+  @extend .alert;
+}
+ 
+.validation_error {
+  @extend .alert;
+  @extend .alert-danger;
+}
+ 
+.validation_message {
+  @extend .alert;
+  @extend .alert-success;
+}
+ 
+.gform_button {
+  @extend .btn;
+}
+ 
+.gfield_required {
+  color: red;
+}
+ 
+.gform_wrapper ul.gfield_radio li, .gform_wrapper ul.gfield_checkbox li {
+  @extend .form-check;
+}
+ 
+.gform_validation_container {
+  display: none;
+}
+ 
+.gfield_error .ginput_container {
+  margin-bottom: 10px;
 }

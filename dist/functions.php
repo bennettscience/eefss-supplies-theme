@@ -40,7 +40,7 @@ foreach ( $understrap_includes as $file ) {
 /** Register AJAX scripts */
 function eefss_register_request_scripts() {
 
-	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/request-handler.js' );
+	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/eefss.js' );
 	wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
 
     $local_arr = array(
@@ -62,13 +62,16 @@ function eefss_request_item_callback() {
 	// access the database
 	global $wpdb;
 
+	// convert vars passed through AJAX to PHP variables
 	$request = $_POST['action'];
 	$user_id = $_POST['user_id'];
 	$post_id = $_POST['post_id'];
 	$quant = $_POST['quant'];
 
+	// Get the user
 	$user = get_user_by('id', intval($user_id));
 
+	// Set a date
 	$date = new DateTime();
 
 	// Check the action key and run the appropriate function.
@@ -100,16 +103,12 @@ function eefss_request_item_callback() {
 			add_row('requests', $row, intval($post_id));
 
 			// If there are none left, set `expired` to true
-			update_field('expired', 1, intval($post_id));
+			// update_field('expired', 1, intval($post_id));
 			update_field('quantity', $available, intval($post_id));
 
-			// Update the post status to `expired` and remove it from the query results
-			$update = array(
-				'ID' => intval($post_id),
-				'post_status' => 'expired',
-			);
-
-			wp_update_post($update);
+			// Update the post taxonomy to `expired` and remove it from the query results
+			wp_set_object_terms(intval($post_id), 'expired', 'status' );
+			wp_remove_object_terms( intval($post_id), 'active', 'status' );
 
 		} else {
 			// There is more available. Set the new quantity and return.
@@ -122,16 +121,13 @@ function eefss_request_item_callback() {
 			);
 
 			add_row('requests', $row, intval($post_id));
+
 			// There are some left, so subtract and return an updated quantity
 			update_field('quantity', intval($available), intval($post_id));
 
 			// Mark the post as `requested` to filter into the admin dashboard
-			$update = array(
-				'ID' => intval($post_id),
-				'post_status' => 'requested',
-			);
-
-			wp_update_post($update);
+			wp_set_object_terms( intval($post_id), 'request_pending', 'status' );
+			wp_remove_object_terms( intval($post_id), 'active', 'status' );
 		}
 	}
 
@@ -146,23 +142,6 @@ function eefss_add_query_vars( $vars ) {
 	return $vars;
 }
 
-/** Capture the teacher contact form input and redirect **/
-add_action( 'ninja_forms_submission_actions', 'eefss_redirect_on_form_submit' );
-function eefss_redirect_on_form_submit( $data ) {
-
-	global $ninja_forms_processing;
-	
-	foreach( $data['fields'] as $field ) {
-		if( $field['key'] == 'type') {
-			if($field['value'] === 'financial' ) {
-				$url = "https://elkharteducationfoundation.networkforgood.com/projects/37979-make-a-gift-today?donate_designation_id=13308";
-				$ninja_forms_processing->update_form_setting( 'landing_page', $url)->save();
-			}
-		}
-	}
-}
-
-
 /***********************/
 /** USER REGISTRATION **/
 /***********************/
@@ -171,27 +150,7 @@ function eefss_redirect_on_form_submit( $data ) {
 add_action('register_form', 'eefss_register_form');
 function eefss_register_form() {
 	
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed = get_buildings();
 
 	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
 
@@ -229,35 +188,15 @@ function eefss_register_form() {
 add_filter( 'registration_errors', 'eefss_registration_errors', 10, 3 );
 function eefss_registration_errors( $errors, $sanitized_user_login, $user_email ) {
 
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed = get_buildings();
 
 	// Make sure a building is selected.
-	if ( empty( $_POST['building'] ) ) {
-		$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	}
+	// if ( empty( $_POST['building'] ) ) {
+	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
+	// }
 
 	// Validate the building input.
-	if ( ! empty( $_POST['building'] ) && !in_array(strval( $_POST['building'] ), $allowed, true ) ) {
+	if ( ! empty( $_POST['building'] ) && !is_allowed_building(strval( $_POST['building'] ) ) ) {
 		$errors->add( 'building_error', __( '<strong>ERROR</strong>: The building you submitted is not allowed. Please try again.', 'crf' ) );
 	}
 
@@ -282,35 +221,15 @@ function eefss_registration_errors( $errors, $sanitized_user_login, $user_email 
 add_action( 'user_register', 'eefss_user_register' );
 function eefss_user_register( $user_id ) {
 
-	$allowed = array(
-		'Beardsley',
-		'Beck',
-		'Bristol',
-		'Central',
-		'Cleveland',
-		'Daly',
-		'Eastwood',
-		'Elkhart Academy',
-		'Feeser',
-		'Hawthorne',
-		'Memorial',
-		'North Side',
-		'Osolo',
-		'Pierre Moran',
-		'Pinewood',
-		'Riverview',
-		'Roosevelt',
-		'West Side',
-		'Woodland',
-	);
+	$allowed = get_buildings();
 
 	// Make sure a building is submitted to the DB.
-	if ( empty( $_POST['building'] ) ) {
-		$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	}
+	// if ( empty( $_POST['building'] ) ) {
+	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
+	// }
 
 	// Validate the building submission one last time
-	if ( ! empty( $_POST['building'] ) && in_array(strval( $_POST['building'] ), $allowed, true) ) {
+	if ( ! empty( $_POST['building'] ) && is_allowed_building(strval( $_POST['building'] ) ) ) {
 		update_user_meta( $user_id, 'building', strval( $_POST['building'] ) );
 	}
 
@@ -404,14 +323,9 @@ function eefss_user_login_check($args = '') {
     return $args;
 }
 
+function get_buildings() {
 
-/** Show the user's location as a field in the Profile page **/
-// TODO: Convert location display into dropdown in case a user needs to update the field.
-add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
-add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
-function eefss_show_extra_profile_fields( $user ) {
-
-	$allowed = array(
+	$buildings = array(
 		'Beardsley',
 		'Beck',
 		'Bristol',
@@ -433,6 +347,27 @@ function eefss_show_extra_profile_fields( $user ) {
 		'Woodland',
 	);
 
+	return $buildings;
+}
+
+function is_allowed_building($loc) {
+	
+	$allowed = get_buildings();
+
+	if( in_array($loc, $allowed) ) {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
+/** Show the user's location as a field in the Profile page **/
+// TODO: Convert location display into dropdown in case a user needs to update the field.
+add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
+add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
+function eefss_show_extra_profile_fields( $user ) {
+	
 	?>
 	<h3><?php esc_html_e( 'Personal Information', 'crf' ); ?></h3>
 
@@ -448,134 +383,6 @@ function eefss_show_extra_profile_fields( $user ) {
 /**********************************************/
 /** CUSTOM STATUSES, POSTS, CATEGORIES, ROLES */
 /**********************************************/
-
-/** Register a custom 'Requested' and 'Complete' post status */
-add_action( 'init', 'eefss_custom_requested_status' );
-function eefss_custom_requested_status() {
-	register_post_status( 'requested', array(
-		'label'                     => _x( 'Requested', 'post' ),
-		'post_type'					=> 'eefss_warehouse_ad',
-		'public'                    => true,
-		'exclude_from_search'       => true,
-		'show_in_admin_all_list'    => true,
-		'show_in_admin_status_list' => true,
-		'label_count'               => _n_noop( 'Requested (%s)', 'Requested (%s)' ),
-	) );
-
-	register_post_status( 'expired', array(
-		'label' 					=> _x('Expired', 'post'),
-		'post_type'					=> 'eefss_warehouse_ad',
-		'public' 					=> true,
-		'exclude_from_search' 		=> true,
-		'show_in_admin_all_list' 	=> true,
-		'show_in_admin_status_list' => true,
-		'label_count' 				=> _n_noop( 'Expired (%s)', 'Expired (%s)'),
-	));
-}
-
-//TODO: custom statuses in quick edit
-/** Add the post statuses to the admin menus **/
-add_action('admin_footer-post.php', 'eefss_append_post_status');
-function eefss_append_post_status() {
-
-	global $wp_post_statuses, $post;
-	// Get all non-builtin post status and add them as <option>
-	$options = $display = '';
-	foreach ( $wp_post_statuses as $status )
-	{
-		if ( ! $status->_builtin )
-		{
-			// Match against the current posts status
-			$selected = selected( $post->post_status, $status->name, false );
-			// If we one of our custom post status is selected, remember it
-			$selected AND $display = $status->label;
-			// Build the options
-			$options .= "<option{$selected} value='{$status->name}'>{$status->label}</option>";
-		}
-	}
-	?>
-	<script type="text/javascript">
-		jQuery( document ).ready( function($) 
-		{
-			let appended = false;
-
-			<?php
-			// Add the selected post status label to the "Status: [Name] (Edit)" 
-			if ( ! empty( $display ) ) : 
-			?>
-				$( '#post-status-display' ).html( '<?php echo $display; ?>' )
-			<?php 
-			endif; 
-			// Add the options to the <select> element
-			?>
-			$( '.edit-post-status' ).on( 'click', function()
-			{
-				if(!appended) {
-					let select = $( '#post-status-select' ).find( 'select' );
-					$( select ).append( "<?php echo $options; ?>" );
-					appended = true;
-				
-				}
-				
-			} );
-
-			$( '.save-post-status ').on('click', function() {
-				let select = $('#post-status-select').find('select').val();
-				console.log(select);
-				switch(select){
-					case('requested'):
-						$('#save-post').val('Set Requested Status');
-						break;
-					case('completed'):
-						$('#save-post').val('Mark as Complete');
-						break;
-					default:
-						$('#save-post').val('Save');
-				}
-			})
-		} );
-	</script>
-	<?php
-};
-
-/** Add custom bulk options to warehouse item list **/
-add_filter('bulk_actions-edit-eefss_warehouse_ad', 'eefss_warehouse_bulk_actions');
-function eefss_warehouse_bulk_actions($bulk_array) {
-	$bulk_array['eefss_mark_complete'] = 'Mark as Complete';
-
-	return $bulk_array;
-}
-
-/** Handle the action submit when using the bulk edit menu **/
-add_filter('handle_bulk_actions-edit-eefss_warehouse_ad', 'eefss_handle_warehouse_bulk_actions', 10, 3);
-function eefss_handle_warehouse_bulk_actions($redirect, $action, $obj_ids) {
-	// remove redirects
-	$redirect = remove_query_arg( array( 'eefss_mark_completed_done' ), $redirect );
-
-	if($action == 'eefss_mark_completed') {
-		foreach($obj_ids as $post_id) {
-			wp_update_post(array( 
-				'ID' => $post_id,
-				'post_status' => 'completed',
-			));
-		}
-
-		$redirect = add_query_arg( 'eefss_mark_completed_done', count( $object_ids ), $redirect );
-
-	}
-
-	return $redirect;
-}
-
-/** Show a notice after the posts have been updated **/
-add_action('admin_notices', 'eefss_notify_bulk_update');
-function eefss_notify_bulk_update() {
-	if ( ! empty( $_REQUEST['eefss_mark_completed_done'] ) ) {
-		echo '<div id="message" class="updated notice is-dismissible">
-			<p>Posts updated.</p>
-		</div>';
-	}
-}
 
 /** Create the custom user roles **/
 add_action( 'init', 'eefss_add_custom_roles' );
@@ -635,7 +442,7 @@ function eefss_register_community_ads() {
 		'rewrite' => true,
 		'has_archive' => true,
 		'capability_type' => array('eefss_community_ad', 'eefss_community_ads'),
-		'taxonomies' => array('category'),
+		'taxonomies' => array('category', 'status'),
 		'map_meta_cap' => true,
 	);
     register_post_type('eefss_community_ad', $args);
@@ -678,10 +485,35 @@ function eefss_register_warehouse_ads() {
 		'has_archive' => true,
 		'rewrite' => true,
 		'capability_type' => array('eefss_warehouse_ad', 'eefss_warehouse_ads'),
-		'taxonomies' => array('category'),
+		'taxonomies' => array('category', 'status'),
 		'map_meta_cap' => true,
 	);
     register_post_type('eefss_warehouse_ad', $args);
+}
+
+add_action( 'init', 'eefss_register_status_taxonomy', 0);
+function eefss_register_status_taxonomy() {
+	$labels = array(
+		'name' => _x( 'Item Status', 'taxonomy general name' ),
+		'singular_name' => _x( 'Item Status', 'taxonomy singular name' ),
+		'search_items' =>  __( 'Search Statuses' ),
+		'all_items' => __( 'All Statuses' ),
+		'edit_item' => __( 'Edit Status' ), 
+		'update_item' => __( 'Update Status' ),
+		'parent_item' => null,
+		'parent_item_colon' => null,
+		'add_new_item' => __( 'Add New Status' ),
+		'new_item_name' => __( 'New Status Name' ),
+		'menu_name' => __( 'Statuses' ),
+	);
+	register_taxonomy('status', array('eefss_warehouse_ad', 'eefss_community_ad'), array(
+		'hierarchical' => true,
+		'labels' => $labels,
+		'show_ui' => true,
+		'show_admin_column' => true,
+		'query_var' => true,
+		'rewrite' => array( 'slug' => 'status' ),
+	));
 }
 
 /** Include custom posts in the search results **/
@@ -691,6 +523,7 @@ function eefss_site_search( $query ) {
     if ( $query->is_search ) {
 		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad' ) );
 		$query->set( 'post_status', array( 'publish' ) );
+		$query->set( 'status', array( 'public' ) ); // Check the custom taxonomy
     }
     
     return $query;
@@ -753,7 +586,6 @@ function eefss_add_teacher_caps() {
 }
 
 /** Add default categories on theme activation **/
-// TODO: Add default categories
 // add_action('init', 'eefss_register_default_categories');
 // function eefss_register_default_categories() {
 // 	$cats = array(
@@ -837,7 +669,6 @@ add_action( 'do_meta_boxes', 'eefss_dashboard_meta_boxes');
 function eefss_dashboard_meta_boxes() {
 	if(current_user_can('eefss_manager')) {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
-		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 		remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
 		remove_meta_box('dashboard_activity', 'dashboard', 'normal');
@@ -853,49 +684,56 @@ function eefss_dashboard_meta_boxes() {
 		remove_meta_box('dashboard_primary', 'dashboard', 'side');
 	} else {
 		add_meta_box('eefss-ad-stats', __('Site Stats'), 'eefss_manager_dash_meta_display', 'dashboard', 'normal', 'high');
-		add_meta_box('eefss-form-stats', __('Form Submissions'), 'eefss_manager_form_submissions', 'dashboard', 'side');
 
 	}
-}
-
-function eefss_manager_form_submissions($data) {
-
-	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
-
-	?>
-	<div>
-
-	<?php 
-
-	$nf = new Ninja_Forms();
-
-	$forms = $nf->form()->get_forms();
-
-	foreach($forms as $form) {
-		$subs = $nf->form( $form->get_id() )->get_subs();
-
-		echo '<pre>' . $form->get_setting( 'title' ) . ' &npsp; ' . count($subs) . '</pre>';
-
-	}
-
-	?>
-	</div>
-
-	<?php
-
-	wp_reset_query();
 }
 
 /** Define metabox for Manager role on dashboard **/
-// TODO: Add form submit meta boxes
 function eefss_manager_dash_meta_display($data) {
 
 	wp_nonce_field(basename(__FILE__), "meta-box-nonce");
 
+	$all_active = new WP_Query(array(
+		'post_type' => array('eefss_warehouse_ad'),
+		'post_status' => 'publish',
+		'tax_query' => array(
+			'relation' => 'AND',
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('active'),
+				'operator' => 'IN',
+			),
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('request_pending', 'expired'),
+				'operator' => 'NOT IN',
+			)
+		)
+	));
+
+	wp_reset_query();
+
 	// Get the number of warehouse posts marked requested
 	$warehouse_query = new WP_Query(array(
-		'post_type' => 'eefss_warehouse_ad',
-		'post_status' => 'requested',
+		'post_type' => array('eefss_warehouse_ad'),
+		'post_status' => 'publish',
+		'tax_query' => array(
+			'relation' => 'AND',
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('request_pending'),
+				'operator' => 'IN',
+			),
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('active', 'expired'),
+				'operator' => 'NOT IN',
+			)
+		)
 	));
 
 	// Build a table
@@ -911,10 +749,10 @@ function eefss_manager_dash_meta_display($data) {
 			</thead>
 			<tbody style="font-size:32px; text-align:center;">
 				<td>
-					<?php echo wp_count_posts('eefss_warehouse_ad')->publish; ?>
+					<a href="<?php echo admin_url( '/edit.php?post_type=eefss_warehouse_ad&status=active'); ?>"><?php echo $all_active->found_posts; ?></a>
 				</td>
 				<td>
-					<a href="<?php echo home_url('wp-admin/edit.php?post_type=eefss_warehouse_ad&post_status=requested'); ?>"><?php echo $warehouse_query->found_posts; ?></a>
+					<a href="<?php echo admin_url('/edit.php?post_type=eefss_warehouse_ad&status=request_pending'); ?>"><?php echo $warehouse_query->found_posts; ?></a>
 				</td>
 				<td>
 					<?php echo wp_count_posts('eefss_community_ad')->publish; ?>
@@ -926,7 +764,6 @@ function eefss_manager_dash_meta_display($data) {
 		</table>
 	<?php
 	wp_reset_query();
-
 
 }
 
@@ -959,7 +796,7 @@ function eefss_teacher_dash_meta_display($data) {
 		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<tr>
 				<td>
-					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+					<a href="<?php echo get_edit_post_link(); ?>"><?php echo the_title(); ?></a>
 				</td>
 				<td>
 					<?php the_time( get_option( date_format ) ); ?>
@@ -1006,7 +843,7 @@ function eefss_teacher_dash_requests($data) {
 					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
 				</td>
 				<td>
-					<?php echo get_post_status(); ?>
+					<!-- get the custom field matching this user -->
 				</td>
 			</tr>
 		
@@ -1065,31 +902,20 @@ function eefss_post_acf_data() {
 
 	$acf_data = get_fields($the_post->ID);
 
+	$complete = ($acf_data['complete']) ? 'Completed' : 'In Progress';
+
 	$string = "<div class='eefss_community_ad_data'>
-		<div class='name'>" . $author->first_name . ' ' . $author->last_name . "</div>
-		<div class='building'>" . $author->building . "</div>
-		<h4>About " . $author->first_name . "</h4>
+		<h2>Staff Member Info</h2>
+		<div class='info'>
+			<span class='name'>" . $author->first_name . ' ' . $author->last_name . ", <span class='building'>". $author->building . "</span>
+			<span class='assignment'>" . $author->assignment ."<span>
+		</div>
 		<div class='about'>" . $author->description . "</div>
 		<hr />
 		<h4>Project Details</h4>
-		<div class='cost'>Est. Cost: " . $acf_data['cost_estimate'] . "</div>
-		<a class='btn btn-secondary' id='listing-" . $post_id . "' href='http://localhost/contact?title=" . $the_post->post_title . "&auth=" . $author->user_email . "'>Contact " . $author->first_name . "</a>
-	</div>";
-
-	return $string;
-}
-
-add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
-function eefss_warehouse_acf_data() {
-	global $post;
-
-	$the_post = get_post();
-
-	$acf_data = get_fields($the_post->ID);
-
-	$string = "<div class='eefss_warehouse_ad_data'>
-		<div id='avail-quant'>" . $acf_data['quantity'] . "</div>
-		<div class='unit-quant'>Unit quantity: " . $acf_data['unit_quantity'] . "</div>
+		<div class='status'>Status: ". $complete . "</div>
+		<div class='cost'>Est. Cost: $" . $acf_data['cost_estimate'] . "</div>
+		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
 	</div>";
 
 	return $string;
@@ -1102,27 +928,73 @@ function eefss_author_posts() {
 	$author_id = $post->post_author;
 	$author = get_userdata($author_id);
 
-	$query = new WP_Query(array(
+	$query = get_posts(array(
 		'post_type' => 'eefss_community_ad',
 		'author' => $author_id,
 		'orderby' => 'post_date',
-		'order' => 'ASC',
+		'order' => 'DESC',
 		'numberposts' => 5
 	));
 
-	?>
-	<h4>More by <?php echo $author->first_name; ?></h4>
-	<hr />
-	<ol>
-	<?php
+	$string = '<div class="teacher-data">
+		<h4>More by '. $author->first_name .'</h4>
+		<hr />
+		<ol>';
 
-	if($query->have_posts()) {
-	
-		while($query->have_posts()) : $query->the_post() ?>
+		if($query > 0) {
 
-			<li><a href='<?php the_permalink(); ?>'><?php the_title(); ?></a></li>
+			foreach($query as $item) {
 
-	<?php endwhile;
+				$string .= '<li><a href="'. $item->guid .'">'. $item->post_title .'</a></li>';
 
-	}
+			}
+
+		};
+
+	$string .= '</ol></div>';
+
+	return $string;
+}
+
+add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
+function eefss_warehouse_acf_data() {
+	global $post;
+
+	$the_post = get_post();
+
+	$acf_data = get_fields($the_post->ID);
+
+	$string = "
+		<div class='eefss_warehouse_ad_data'>
+			<h2>Item Details</h2>
+			<hr />
+			<div class='unit-quant'><strong>Unit quantity:</strong> " . $acf_data['unit_quantity'] . "</div>
+			<div class='avail'><strong>Stock available:</strong> 
+				<span id='avail-quant'>". $acf_data['quantity'] . "</span>
+			</div>
+			
+			<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>
+		</div>";
+
+	return $string;
+}
+
+// Clean up the Gravity Forms styles with Bootstrap classes
+add_filter( 'gform_field_container', 'eefss_add_bootstrap_container_class', 10, 6 );
+function eefss_add_bootstrap_container_class( $field_container, $field, $form, $css_class, $style, $field_content ) {
+  $id = $field->id;
+  $field_id = is_admin() || empty( $form ) ? "field_{$id}" : 'field_' . $form['id'] . "_$id";
+  return '<li id="' . $field_id . '" class="' . $css_class . ' form-group">{FIELD_CONTENT}</li>';
+}
+
+// Edit the Gravity Forms submit button
+add_filter( 'gform_submit_button', 'eefss_add_custom_css_classes', 10, 2 );
+function eefss_add_custom_css_classes( $button, $form ) {
+    $dom = new DOMDocument();
+    $dom->loadHTML( $button );
+    $input = $dom->getElementsByTagName( 'input' )->item(0);
+    $classes = $input->getAttribute( 'class' );
+    $classes .= "btn btn-secondary";
+    $input->setAttribute( 'class', $classes );
+    return $dom->saveHtml( $input );
 }
