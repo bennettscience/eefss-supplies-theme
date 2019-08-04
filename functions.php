@@ -88,7 +88,7 @@ function eefss_request_item_callback() {
 
 			header('HTTP/1.1 500 Internal Error');
         	header('Content-Type: application/json; charset=UTF-8');
-			wp_die(json_encode(array('message' => 'ERROR - You requested more items than were available. Please update your quantity and try again.', 'value' => $available)));
+			wp_die(json_encode(array('message' => '<span class="error">Error</span> - You requested more items than were available. Please update your quantity and try again.', 'value' => $available)));
 			
 		} elseif(intval($available) == 0) {
 
@@ -131,7 +131,7 @@ function eefss_request_item_callback() {
 		}
 	}
 
-	wp_die(json_encode(array('message' => 'SUCCESS - Your request has been filed.', 'remaining' => $available)));
+	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
 }
 
 add_action( 'query_vars', 'eefss_add_query_vars' );
@@ -523,7 +523,7 @@ function eefss_site_search( $query ) {
     if ( $query->is_search ) {
 		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad' ) );
 		$query->set( 'post_status', array( 'publish' ) );
-		$query->set( 'status', array( 'public' ) ); // Check the custom taxonomy
+		$query->set( 'status', array( 'active' ) ); // Check the custom taxonomy
     }
     
     return $query;
@@ -544,6 +544,7 @@ function eefss_query_post_type($query) {
     }
 }
 
+//TODO: Add in admin roles
 /** Add role capabilities for managers **/
 add_action('init', 'eefss_add_manager_role_caps');
 function eefss_add_manager_role_caps() {
