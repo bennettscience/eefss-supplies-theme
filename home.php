@@ -28,29 +28,7 @@ $container = get_theme_mod( 'understrap_container_type' );
           
               <main class="site-main home-only" id="main" role="main">
                                 
-                <?php if(is_user_logged_in()) { ?>
-                  <div class="row search justify-content-center">
-                    
-                    <div class="col-lg-8">
-                    
-                      <?php get_template_part( 'searchform' ); ?>
-                    
-                    </div>
-                  
-                  </div>
-
-                <div class="container user-message logged-in">
-                  <div class="row justify-content-center" id="acct-cta">
-                    <div class="col-lg-4">
-                      <a class="btn btn-secondary" href="<?php echo home_url( '/stock-supply-request'); ?>">Request Stock Supplies</a>
-                    </div>
-                    <div class="col-lg-4">
-                      <a class="btn btn-secondary" href="<?php echo home_url( '/staff-request' ); ?>">Post a Request</a>
-                    </div>
-                  </div>
-                </div>
-                
-                <?php } else { ?>
+                <?php if(!is_user_logged_in()) { ?>
                   <div class="container user-message logged-out">
 
                   <div class="row justify-content-center">
@@ -71,16 +49,7 @@ $container = get_theme_mod( 'understrap_container_type' );
                     </div>
                   </div>
                 </div>
-                <div class="row search justify-content-center">
-                    
-                    <div class="col-lg-8">
-                    
-                      <?php get_template_part( 'searchform' ); ?>
-                    
-                    </div>
-                  
-                  </div>
-
+                
                 <?php }; ?> 
                   
                   <div class="categories row"> <!-- category search -->

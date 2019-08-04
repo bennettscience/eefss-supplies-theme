@@ -39,7 +39,7 @@
 							<input class="form-control" placeholder="1" id="quant" type="number" min="1" max="' . $quant . '" value="" />
 						</label>
 						<button class="btn btn-primary mb-2" id="request-item-btn" data-id="'. $post->ID .'">Request Item</button>
-						<span id="response"></span>
+						<div id="response"></div>
 					</div>
 					<!-- Modal Footer -->
 					<div class="modal-footer">

@@ -33,6 +33,36 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
+.navbar {
+    padding: 1rem 1rem;
+    box-shadow: 0 4px 4px #5d2525;
+    z-index: 10;
+
+    .container {
+        max-width: 1140px;  // Match the main container width
+        margin: 0 auto;     // Center on the page
+        position: relative; // Helps position the absolute search box
+
+        .navbar-search {
+            position: absolute;
+            left: 0;
+
+            #searchform {
+                
+                #s {
+                    font-size: 1rem;
+                }
+
+                .input-group .input-group-append #searchsubmit {
+                    font-size: 1rem;
+                }
+            }
+
+            
+        }
+    }
+}
+
 .widget {
     margin-bottom: 45px;
     border: 1px solid $gray;
@@ -43,6 +73,20 @@ h1, h2, h3, h4, h5, h6 {
 .complete {
     font-weight: 700;
     color: green;
+}
+
+.response {
+    display: block;
+}
+
+.success {
+    font-weight: 700;
+    color: green;
+}
+
+.error {
+    font-weight: 700;
+    color: red;
 }
 
 .user-message {
@@ -68,9 +112,35 @@ h1, h2, h3, h4, h5, h6 {
 
 // Bump the main container up in to the hero only on the landing page
 .home-only {
-    margin-top: -100px;
     background-color: #fff !important;
 }
+
+#wrapper-hero {
+    position: relative;
+
+    .row {
+        margin: 0 !important;
+    }
+
+    .search {
+        position: absolute;
+        bottom: 15px;
+        width: 100%;
+
+        #searchform {
+            #s {
+                font-size: 32px;
+            }
+
+            #searchsubmit {
+                font-size: 32px;
+            }
+            
+        }
+    }
+}
+
+
 
 .site-main {
     .search {
@@ -78,17 +148,17 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-#searchform {
-    #s {
-        line-height: 36px;
-        font-size: 38px;
-    }
+// #wrapper-hero > #searchform {
+//     #s {
+//         line-height: 36px;
+//         font-size: 38px;
+//     }
 
-    #searchsubmit {
-        font-size: 28px;
-    }
+//     #searchsubmit {
+//         font-size: 28px;
+//     }
     
-}
+// }
 
 .headline {
 
@@ -115,10 +185,6 @@ h1, h2, h3, h4, h5, h6 {
             display: block;
         }
     }
-}
-
-.bg-primary {
-    background-color: $primary;
 }
 
 table {border:0; border-collapse:separate; border-spacing:0 5px;}
@@ -195,3 +261,5 @@ thead tr th{border-bottom: 1px solid black; border-collapse:separate; border-spa
 .gfield_error .ginput_container {
   margin-bottom: 10px;
 }
+
+// TODO: Searchform breakpoints

@@ -530,6 +530,19 @@ function eefss_site_search( $query ) {
     
 }
 
+/** Add search to the nav manu **/
+add_filter('wp_nav_menu_items','eefss_add_search_box_to_menu', 10, 2);
+function eefss_add_search_box_to_menu( $items, $args ) {
+    ob_start();
+    get_search_form();
+    $searchform = ob_get_contents();
+    ob_end_clean();
+
+    $items .= '<li class="navbar-search">' . $searchform . '</li>';
+
+    return $items;
+}
+
 /** Include custom post types in the Category view **/
 add_filter('pre_get_posts', 'eefss_query_post_type');
 function eefss_query_post_type($query) {
