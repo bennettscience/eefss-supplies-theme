@@ -16,22 +16,22 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-#menu-item-144 {
-    border: 1px solid rgba(255,255,255,1);
-    background-color: transparent;
-    font-weight: 800;
-    color: rgba(255,255,255,0.5);
-    transition: all 0.25s ease-in-out;
+// #menu-item-144 {
+//     border: 1px solid rgba(255,255,255,1);
+//     background-color: transparent;
+//     font-weight: 800;
+//     color: rgba(255,255,255,0.5);
+//     transition: all 0.25s ease-in-out;
 
-    &:hover {
-        background-color: rgba(255,255,255,0.9);
+//     &:hover {
+//         background-color: rgba(255,255,255,0.9);
         
         
-        a {
-            color: $secondary;
-        }
-    }
-}
+//         a {
+//             color: $secondary;
+//         }
+//     }
+// }
 
 .navbar {
     padding: 1rem 1rem;
@@ -64,10 +64,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .widget {
+    background-color: #fff;
     margin-bottom: 45px;
-    border: 1px solid $gray;
+    // border: 1px solid $gray;
     padding: 15px;
-    border-bottom: 2px solid $gray;
+    border-bottom: 2px solid #deacb6;
+}
+
+article {
+    padding: 25px 10px;
 }
 
 .complete {
@@ -98,6 +103,7 @@ h1, h2, h3, h4, h5, h6 {
     
     #acct-cta {
         text-align: center;
+        padding: 15px 0;
 
         a {
             font-size: 24px;
@@ -111,9 +117,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 // Bump the main container up in to the hero only on the landing page
-.home-only {
-    background-color: #fff !important;
-}
+// .home-only {
+//     background-color: #fff !important;
+// }
 
 #wrapper-hero {
     position: relative;
@@ -124,7 +130,8 @@ h1, h2, h3, h4, h5, h6 {
 
     .search {
         position: absolute;
-        bottom: 15px;
+        left: 0;
+        bottom: 100px;
         width: 100%;
 
         #searchform {
@@ -140,12 +147,26 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-
-
 .site-main {
-    .search {
-        padding-top: 25px;
-    }
+   .container {
+       background-color: #fff !important;
+       margin-top: 15px;
+       margin-bottom: 15px;
+   }
+
+   .about > * {
+       padding: 0;
+       margin: 0 !important;
+   }
+
+   .wp-block-cover {
+       margin: 0 !important;
+   }
+
+}
+
+.content-area {
+    background-color: #fff;
 }
 
 // #wrapper-hero > #searchform {
@@ -168,22 +189,37 @@ h1, h2, h3, h4, h5, h6 {
 
 }
 
-.categories {
-    padding: 25px;
+.heading {
+    text-align: center;
 }
 
-.cat-block, .new-request {
+.categories {
+    padding: 25px 10px;
+}
+
+.cat-block, .new-request-block {
     .well {
         padding: 10px;
         height: 100%;
-    }
-}
 
-.cat-block {
-    .well {
         span {
             display: block;
         }
+    }
+}
+
+.new-request-block {
+    padding: 25px 10px;
+
+    .well {
+        position: relative;
+        min-height: 250px;
+
+    }
+    .understrap-read-more-link {
+        display: block;
+        position: absolute;
+        bottom: 25px;
     }
 }
 

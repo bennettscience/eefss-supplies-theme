@@ -243,11 +243,11 @@ function eefss_user_register( $user_id ) {
 
 }
 
-/** Redirect teachers to index instead of the dashboard after login **/
-add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
-function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
-	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
-}
+// /** Redirect teachers to index instead of the dashboard after login **/
+// add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
+// function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
+// 	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
+// }
 
 /** Redirect to index on logout **/
 add_action( 'wp_logout', 'eefss_redirect_user_on_logout');
@@ -530,17 +530,23 @@ function eefss_site_search( $query ) {
     
 }
 
-/** Add search to the nav manu **/
+/** Add search to the nav manu if not on home page **/
 add_filter('wp_nav_menu_items','eefss_add_search_box_to_menu', 10, 2);
 function eefss_add_search_box_to_menu( $items, $args ) {
-    ob_start();
-    get_search_form();
-    $searchform = ob_get_contents();
-    ob_end_clean();
+	if( !is_front_page() && !is_home() ) {
+		ob_start();
+		get_search_form();
+		$searchform = ob_get_contents();
+		ob_end_clean();
 
-    $items .= '<li class="navbar-search">' . $searchform . '</li>';
+		$items .= '<li class="navbar-search">' . $searchform . '</li>';
 
-    return $items;
+		return $items;
+	}
+	else {
+		return $items;
+	}
+	
 }
 
 /** Include custom post types in the Category view **/
@@ -978,6 +984,12 @@ function eefss_warehouse_acf_data() {
 
 	$acf_data = get_fields($the_post->ID);
 
+	if(is_user_logged_in()) {
+		$button = "<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>";
+	} else {
+		$button = "<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#signInPrompt'>Place Request</button>";
+	}
+
 	$string = "
 		<div class='eefss_warehouse_ad_data'>
 			<h2>Item Details</h2>
@@ -985,10 +997,9 @@ function eefss_warehouse_acf_data() {
 			<div class='unit-quant'><strong>Unit quantity:</strong> " . $acf_data['unit_quantity'] . "</div>
 			<div class='avail'><strong>Stock available:</strong> 
 				<span id='avail-quant'>". $acf_data['quantity'] . "</span>
-			</div>
-			
-			<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>
-		</div>";
+			</div>". 
+			$button
+		."</div>";
 
 	return $string;
 }
