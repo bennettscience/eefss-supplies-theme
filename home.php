@@ -28,29 +28,7 @@ $container = get_theme_mod( 'understrap_container_type' );
           
               <main class="site-main home-only" id="main" role="main">
                                 
-                <?php if(is_user_logged_in()) { ?>
-                  <div class="row search justify-content-center">
-                    
-                    <div class="col-lg-8">
-                    
-                      <?php get_template_part( 'searchform' ); ?>
-                    
-                    </div>
-                  
-                  </div>
-
-                <div class="container user-message logged-in">
-                  <div class="row justify-content-center" id="acct-cta">
-                    <div class="col-lg-4">
-                      <a class="btn btn-secondary" href="<?php echo home_url( '/stock-supply-request'); ?>">Request Stock Supplies</a>
-                    </div>
-                    <div class="col-lg-4">
-                      <a class="btn btn-secondary" href="<?php echo home_url( '/staff-request' ); ?>">Post a Request</a>
-                    </div>
-                  </div>
-                </div>
-                
-                <?php } else { ?>
+                <?php if(!is_user_logged_in()) { ?>
                   <div class="container user-message logged-out">
 
                   <div class="row justify-content-center">
@@ -71,19 +49,28 @@ $container = get_theme_mod( 'understrap_container_type' );
                     </div>
                   </div>
                 </div>
-                <div class="row search justify-content-center">
-                    
-                    <div class="col-lg-8">
-                    
-                      <?php get_template_part( 'searchform' ); ?>
-                    
-                    </div>
-                  
-                  </div>
+                
+                <?php } else {; ?> 
+                  <div class="container user-message logged-in">
+                    <h1 class="col-lg-12 heading">Quick Actions</h1>
 
-                <?php }; ?> 
-                  
+                    <div class="row justify-content-center" id="acct-cta">
+                      <div class="col-lg-4">
+                        <a class="btn btn-secondary" href="<?php echo home_url( '/stock-supply-request'); ?>">Request Stock Supplies</a>
+                      </div>
+                      <div class="col-lg-4">
+                        <a class="btn btn-secondary" href="<?php echo home_url( '/staff-request' ); ?>">Post a Request</a>
+                      </div>
+                      <div class="col-lg-4">
+                        <a class="btn btn-secondary" href="<?php echo home_url( '/eefss_warehouse_ad' ); ?>">Browse Items</a>
+                    </div>
+                  </div>
+                </div>
+                <?php }; ?>
+                  <div class="container">
                   <div class="categories row"> <!-- category search -->
+                      <h1 class="col-lg-12 heading">Browse by Category</h1>
+
                     <?php
                       $args = array(
                         'taxonomy'    => 'category',
@@ -119,7 +106,9 @@ $container = get_theme_mod( 'understrap_container_type' );
                       wp_reset_postdata();
                     ?>
                   </div> <!-- /row -->
+                  </div>
 
+                  <div class="container">
                   <div class="about row">
                     
                     <div class="col-lg-12">
@@ -127,9 +116,11 @@ $container = get_theme_mod( 'understrap_container_type' );
                     </div>
                     
                   </div>
-
-                  <div class="row"> <!-- recent teacher requests -->
-                    <h1 class="col-lg-12">New Teacher Requests</h1>
+                  </div>
+                  
+                  <div class="container">
+                  <div class="row new-request-block"> <!-- recent teacher requests -->
+                    <h1 class="col-lg-12 heading">Recent Teacher Requests</h1>
                   <?php
 
                   $query = new WP_Query(array( 
@@ -165,6 +156,8 @@ $container = get_theme_mod( 'understrap_container_type' );
 
                   wp_reset_postdata();
                   ?>
+                  </div>
+                </div>
 
 				</main><!-- #main -->
 

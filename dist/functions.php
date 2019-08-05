@@ -88,7 +88,7 @@ function eefss_request_item_callback() {
 
 			header('HTTP/1.1 500 Internal Error');
         	header('Content-Type: application/json; charset=UTF-8');
-			wp_die(json_encode(array('message' => 'ERROR - You requested more items than were available. Please update your quantity and try again.', 'value' => $available)));
+			wp_die(json_encode(array('message' => '<span class="error">Error</span> - You requested more items than were available. Please update your quantity and try again.', 'value' => $available)));
 			
 		} elseif(intval($available) == 0) {
 
@@ -131,7 +131,7 @@ function eefss_request_item_callback() {
 		}
 	}
 
-	wp_die(json_encode(array('message' => 'SUCCESS - Your request has been filed.', 'remaining' => $available)));
+	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
 }
 
 add_action( 'query_vars', 'eefss_add_query_vars' );
@@ -243,11 +243,11 @@ function eefss_user_register( $user_id ) {
 
 }
 
-/** Redirect teachers to index instead of the dashboard after login **/
-add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
-function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
-	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
-}
+// /** Redirect teachers to index instead of the dashboard after login **/
+// add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
+// function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
+// 	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
+// }
 
 /** Redirect to index on logout **/
 add_action( 'wp_logout', 'eefss_redirect_user_on_logout');
@@ -523,11 +523,30 @@ function eefss_site_search( $query ) {
     if ( $query->is_search ) {
 		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad' ) );
 		$query->set( 'post_status', array( 'publish' ) );
-		$query->set( 'status', array( 'public' ) ); // Check the custom taxonomy
+		$query->set( 'status', array( 'active' ) ); // Check the custom taxonomy
     }
     
     return $query;
     
+}
+
+/** Add search to the nav manu if not on home page **/
+add_filter('wp_nav_menu_items','eefss_add_search_box_to_menu', 10, 2);
+function eefss_add_search_box_to_menu( $items, $args ) {
+	if( !is_front_page() && !is_home() ) {
+		ob_start();
+		get_search_form();
+		$searchform = ob_get_contents();
+		ob_end_clean();
+
+		$items .= '<li class="navbar-search">' . $searchform . '</li>';
+
+		return $items;
+	}
+	else {
+		return $items;
+	}
+	
 }
 
 /** Include custom post types in the Category view **/
@@ -544,6 +563,7 @@ function eefss_query_post_type($query) {
     }
 }
 
+//TODO: Add in admin roles
 /** Add role capabilities for managers **/
 add_action('init', 'eefss_add_manager_role_caps');
 function eefss_add_manager_role_caps() {
@@ -964,6 +984,12 @@ function eefss_warehouse_acf_data() {
 
 	$acf_data = get_fields($the_post->ID);
 
+	if(is_user_logged_in()) {
+		$button = "<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>";
+	} else {
+		$button = "<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#signInPrompt'>Place Request</button>";
+	}
+
 	$string = "
 		<div class='eefss_warehouse_ad_data'>
 			<h2>Item Details</h2>
@@ -971,10 +997,9 @@ function eefss_warehouse_acf_data() {
 			<div class='unit-quant'><strong>Unit quantity:</strong> " . $acf_data['unit_quantity'] . "</div>
 			<div class='avail'><strong>Stock available:</strong> 
 				<span id='avail-quant'>". $acf_data['quantity'] . "</span>
-			</div>
-			
-			<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-target='#requestItem'>Place Request</button>
-		</div>";
+			</div>". 
+			$button
+		."</div>";
 
 	return $string;
 }

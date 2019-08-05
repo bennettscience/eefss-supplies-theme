@@ -15,4 +15,22 @@ defined( 'ABSPATH' ) || exit;
 
 	<?php dynamic_sidebar( 'herocanvas' ); ?>
 
+	<div class="container">
+		
+		<div class="search">
+		
+			<div class="row justify-content-center">
+							
+				<div class="col-lg-8">
+				
+					<?php get_template_part( 'searchform' ); ?>
+				
+				</div>
+
+			</div>	
+		
+		</div>
+
+	</div>
+
 <?php endif; ?>

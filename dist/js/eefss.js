@@ -38,8 +38,8 @@ jQuery(document).ready(function () {
             })
 
             response.done(function(resp) {
-               jQuery('#response').text(resp.message);
-               jQuery('#avail-quant').text(resp.remaining);
+               jQuery('#response').html(resp.message);
+               jQuery('#avail-quant').html(resp.remaining);
             })
 
             response.fail(function(err) {
