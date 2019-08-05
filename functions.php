@@ -326,6 +326,7 @@ function eefss_user_login_check($args = '') {
 function get_buildings() {
 
 	$buildings = array(
+		'Administration',
 		'Beardsley',
 		'Beck',
 		'Bristol',
@@ -337,6 +338,7 @@ function get_buildings() {
 		'Feeser',
 		'Hawthorne',
 		'Memorial HS',
+		'Monger',
 		'North Side MS',
 		'Osolo',
 		'Pierre Moran MS',
