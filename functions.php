@@ -96,18 +96,19 @@ function eefss_request_item_callback() {
 				'requested_by' => $user->user_email,
 				'requested_quantity' => $quant,
 				'requested_date' => $date->format('m-d-Y'),
+				'shipped' => 0,
+				'shipped_date' => '', 
 				'completed' => 0,
 				'completed_date' => '',
 			);
 
 			add_row('requests', $row, intval($post_id));
 
-			// If there are none left, set `expired` to true
-			// update_field('expired', 1, intval($post_id));
+			// If there are none left, set `fulfilled` to true
 			update_field('quantity', $available, intval($post_id));
 
-			// Update the post taxonomy to `expired` and remove it from the query results
-			wp_set_object_terms(intval($post_id), 'expired', 'status' );
+			// Update the post taxonomy to `fulfilled` and remove it from the query results
+			wp_set_object_terms(intval($post_id), 'fulfilled', 'status' );
 			wp_remove_object_terms( intval($post_id), 'active', 'status' );
 
 		} else {
@@ -729,7 +730,7 @@ function eefss_manager_dash_meta_display($data) {
 			array(
 				'taxonomy' => 'status',
 				'field' => 'slug',
-				'terms' => array('request_pending', 'expired'),
+				'terms' => array('fulfilled'),
 				'operator' => 'NOT IN',
 			)
 		)
@@ -752,7 +753,7 @@ function eefss_manager_dash_meta_display($data) {
 			array(
 				'taxonomy' => 'status',
 				'field' => 'slug',
-				'terms' => array('active', 'expired'),
+				'terms' => array('active', 'fulfilled'),
 				'operator' => 'NOT IN',
 			)
 		)
