@@ -41,7 +41,7 @@ foreach ( $understrap_includes as $file ) {
 function eefss_register_request_scripts() {
 
 	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/eefss.js' );
-	wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
+	// wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
 
     $local_arr = array(
         'ajaxurl'   => admin_url( 'admin-ajax.php' ),
@@ -242,13 +242,29 @@ function eefss_user_register( $user_id ) {
 		update_user_meta( $user_id, 'last_name', sanitize_text_field( $_POST['last_name'] ) );
 	}
 
+	// Set a key for the new user to check on each login
+	update_user_meta( $user_id, 'is_first_login', true);
+
 }
 
-// /** Redirect teachers to index instead of the dashboard after login **/
-// add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
-// function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
-// 	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
+/** Redirect new users to simple terms **/
+// check for submission for the current user.
+// If exists, take them to /index
+// add_filter( 'registration_redirect', 'eefss_new_user_redirect' );
+// function eefss_new_user_redirect() {
+// 	return home_url('/complete-registration/');
 // }
+
+/** Redirect teachers to index instead of the dashboard after login **/
+add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
+function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
+	if(get_user_meta($user->ID, 'is_first_login', true)) {
+		update_user_meta($user->ID, 'is_first_login', false);
+		return home_url('/complete-registration');
+	} else {
+		return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
+	}
+}
 
 /** Redirect to index on logout **/
 add_action( 'wp_logout', 'eefss_redirect_user_on_logout');
@@ -802,6 +818,11 @@ function eefss_teacher_dash_meta_display($data) {
 		'author' => get_current_user_id(),
 		'orderby' => 'post_date',
 		'order' => 'ASC',
+		'tax_query' => array(
+			'taxonomy' => 'status',
+			'field' => 'slug',
+			'terms' => array('active'),
+		)
 	));
 
 	?>
