@@ -139,7 +139,7 @@ function eefss_request_item_callback() {
 	// TODO: Update recipient email address
 	$emailTo = 'brian@ohheybrian.com';
 	$subject = 'New warehouse request';
-	$body = eefss_warehouse_request_template($user->user_email, $user->building, $item_title, $item_lot);
+	$body = eefss_warehouse_request_body($user->user_email, $user->building, $item_title, $item_lot);
 	wp_mail($emailTo, $subject, $body, $headers);
 
 	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
@@ -155,11 +155,12 @@ function eefss_add_query_vars( $vars ) {
 
 // template the email
 // TODO: Update email template so it doesn't suck
-function eefss_warehouse_request_template($user, $building, $item, $lot) {
-	$body = '<p>Hello world</p>';
-	$body .= '<p>The user would like ' . $item . "</p>";
-	$body .= '<p>Building: ' . $building . '</p>';
-	$body .= '<p>Lot #: ' . $lot . '</p>';
+function eefss_warehouse_request_body($user, $building, $item, $lot) {
+	$body = '<p>Requester: <b>' . $user->display_name . '</b></p>';
+	$body .= '<p>Requester email: <b>' . $user->user_email . '</b></p>';
+	$body .= '<p>Building: <b>' . $building . '</b></p>';
+	$body .= '<p>Item: <b>' . $item . "</b></p>";
+	$body .= '<p>Lot #: <b>' . $lot . '</b></p>';
 	return $body;
 }
 
@@ -266,14 +267,6 @@ function eefss_user_register( $user_id ) {
 	update_user_meta( $user_id, 'is_first_login', true);
 
 }
-
-/** Redirect new users to simple terms **/
-// check for submission for the current user.
-// If exists, take them to /index
-// add_filter( 'registration_redirect', 'eefss_new_user_redirect' );
-// function eefss_new_user_redirect() {
-// 	return home_url('/complete-registration/');
-// }
 
 /** Redirect teachers to index instead of the dashboard after login **/
 add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
