@@ -41,7 +41,7 @@ foreach ( $understrap_includes as $file ) {
 function eefss_register_request_scripts() {
 
 	wp_register_script( 'request-handler', get_template_directory_uri() . '/js/eefss.js' );
-	// wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
+	wp_enqueue_script( 'request-handler', array('jquery'), '1.0.0', true );
 
     $local_arr = array(
         'ajaxurl'   => admin_url( 'admin-ajax.php' ),
@@ -76,6 +76,9 @@ function eefss_request_item_callback() {
 
 	// Check the action key and run the appropriate function.
 
+	$item_title = get_the_title( $post_id );
+	$item_lot = get_field( 'lot', $post_id, true );
+
 	if($request === 'request_item') {
 
 		// Subtract the requested quantity from the total available
@@ -96,8 +99,6 @@ function eefss_request_item_callback() {
 				'requested_by' => $user->user_email,
 				'requested_quantity' => $quant,
 				'requested_date' => $date->format('m-d-Y'),
-				'shipped' => 0,
-				'shipped_date' => '', 
 				'completed' => 0,
 				'completed_date' => '',
 			);
@@ -132,6 +133,15 @@ function eefss_request_item_callback() {
 		}
 	}
 
+	// Send an email to request the materials
+	add_filter('wp_mail_content_type',create_function('', 'return "text/html"; '));
+
+	// TODO: Update recipient email address
+	$emailTo = 'brian@ohheybrian.com';
+	$subject = 'New warehouse request';
+	$body = eefss_warehouse_request_template($user->user_email, $user->building, $item_title, $item_lot);
+	wp_mail($emailTo, $subject, $body, $headers);
+
 	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
 }
 
@@ -141,6 +151,16 @@ function eefss_add_query_vars( $vars ) {
 	$vars[] = 'auth';
 
 	return $vars;
+}
+
+// template the email
+// TODO: Update email template so it doesn't suck
+function eefss_warehouse_request_template($user, $building, $item, $lot) {
+	$body = '<p>Hello world</p>';
+	$body .= '<p>The user would like ' . $item . "</p>";
+	$body .= '<p>Building: ' . $building . '</p>';
+	$body .= '<p>Lot #: ' . $lot . '</p>';
+	return $body;
 }
 
 /***********************/
