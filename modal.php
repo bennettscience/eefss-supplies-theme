@@ -8,7 +8,7 @@
             </div>
             <!-- Modal Body -->
             <div class="modal-body">
-                <?php gravity_form(3, $display_title=false, $display_description=true,$display_inactive=false, $field_values=null, $ajax=true,$tabindex, $echo=true); ?>
+                <?php gravity_form(3, $display_title=false, $display_description=true,$display_inactive=false, $field_values=null, $ajax=true, $tabindex, $echo=true); ?>
             </div>
             <!-- Modal Footer -->
             <div class="modal-footer">
