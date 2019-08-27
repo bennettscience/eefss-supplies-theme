@@ -961,6 +961,8 @@ function eefss_post_acf_data() {
 
 	$complete = ($acf_data['complete']) ? 'Completed' : 'In Progress';
 
+	$user_string .= $author->first_name . ' ' . $author->last_name;
+
 	$string = "<div class='eefss_community_ad_data'>
 		<h2>Staff Member Info</h2>
 		<div class='info'>
@@ -972,7 +974,7 @@ function eefss_post_acf_data() {
 		<h4>Project Details</h4>
 		<div class='status'>Status: ". $complete . "</div>
 		<div class='cost'>Est. Cost: $" . $acf_data['cost_estimate'] . "</div>
-		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
+		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-useremail='" . $author->user_email . "' data-userstring='" . $user_string . "' data-target='#teacherContact'>Contact Teacher</button>
 	</div>";
 
 	return $string;
@@ -1059,4 +1061,39 @@ function eefss_add_custom_css_classes( $button, $form ) {
     $classes .= "btn btn-secondary";
     $input->setAttribute( 'class', $classes );
     return $dom->saveHtml( $input );
+}
+
+// Capture Gravity Forms submission and return data for the donor
+add_filter( 'gform_confirmation', 'eefss_financial_confirmation', 10, 4);
+function eefss_financial_confirmation($confirmation, $form, $entry, $ajax) {
+	
+	if($form["id"] == "3") {
+		$type = rgar($entry, '4');
+
+		if($type === 'financial') {
+
+			$string = 'Please apply this to ' . rgar($entry, '11') .'\'s project, ' . rgar($entry, '2') . '.';
+
+			$confirmation = '
+				<br/>
+				<div class="confirmationbuild">
+				<h2>Thank you for offering a financial contribution!</h2> 
+	
+				<p>You can make your secure donation via the EEF online donation page. On the donation form, please select <b>Tools for Schools</b> for your donation type and paste in the following information:</p>
+	
+				<textarea class="form-control rounded-1" rows="5" cols="25" id="confirmation-select" onclick="this.focus();this.select()" readonly="readonly">' . $string .'</textarea>
+	
+				<a class="btn btn-primary" href="https://elkharteducationfoundation.networkforgood.com/projects/37979-make-a-gift-today">Make my donation</a>
+	
+				</div>';
+
+			return $confirmation;
+		}
+
+	} else {
+
+		return $confirmation;
+
+	}
+
 }
