@@ -115,6 +115,7 @@ function eefss_request_item_callback() {
 		} else {
 			// There is more available. Set the new quantity and return.
 			$row = array(
+				'requester_id' => $user->ID,
 				'requested_by' => $user->user_email,
 				'requested_quantity' => $quant,
 				'requested_date' => $date->format('m-d-Y'),
@@ -149,6 +150,9 @@ add_action( 'query_vars', 'eefss_add_query_vars' );
 function eefss_add_query_vars( $vars ) {
 	$vars[] = 'request';
 	$vars[] = 'auth';
+	$vars[] = 'userid';
+	$vars[] = 'postid';
+	$vars[] = 'title';
 
 	return $vars;
 }
@@ -1095,5 +1099,43 @@ function eefss_financial_confirmation($confirmation, $form, $entry, $ajax) {
 		return $confirmation;
 
 	}
+
+}
+
+// Store the Gravity Form complete submission in the correct post meta
+add_action('gform_after_submission_6', 'eefss_update_post_content', 10, 2);
+function eefss_update_post_content( $entry, $form ) {
+
+	$post_id = intval(rgar($entry, 4));
+	$user_id = intval(rgar($entry, 3));
+	$complete = rgar($entry, 5);
+
+	$post = get_post($post_id);
+
+	error_log($post->post_title);
+
+	error_log("Post ID: " . $post_id);
+	error_log("User ID: " . $user_id);
+	error_log("Completed? " . $complete);
+
+	$requests = get_field('requests', $post_id);
+
+	if( have_rows('requests', $post_id) ):
+
+		while( have_rows('requests', $post_id) ) : the_row();
+
+			update_sub_field('completed', $complete, $post_id);
+			update_sub_field('completed_date', date('m-d-Y'), $post_id);
+
+		endwhile;
+
+		$the_post = get_post($post_id);
+		wp_update_post($the_post);
+	
+	else:
+
+		error_log('No rows found');
+
+	endif;
 
 }
