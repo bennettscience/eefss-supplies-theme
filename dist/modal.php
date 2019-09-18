@@ -8,7 +8,7 @@
             </div>
             <!-- Modal Body -->
             <div class="modal-body">
-                <?php gravity_form(3, $display_title=false, $display_description=true,$display_inactive=false, $field_values=null, $ajax=true,$tabindex, $echo=true); ?>
+                <?php gravity_form(3, $display_title=false, $display_description=true,$display_inactive=false, $field_values=null, $ajax=true, $echo=true); ?>
             </div>
             <!-- Modal Footer -->
             <div class="modal-footer">
@@ -55,7 +55,7 @@
 
 <!-- Request Item Modal Starts -->
 
-<?php if(get_post_type() == 'eefss_warehouse_ad') {
+<?php if(get_post_type() == 'eefss_warehouse_ad' || get_post_type() == 'eefss_special_ad') {
 			$quant = get_field('quantity');
 
 			echo '<div class="modal fade" id="requestItem" role="dialog">

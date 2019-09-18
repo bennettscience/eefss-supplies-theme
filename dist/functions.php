@@ -71,10 +71,17 @@ function eefss_request_item_callback() {
 	// Get the user
 	$user = get_user_by('id', intval($user_id));
 
+        // Get the post
+        $post = get_post( $post_id );
+
 	// Set a date
 	$date = new DateTime();
 
 	// Check the action key and run the appropriate function.
+
+	$item_title = get_the_title( $post_id );
+	$item_lot = get_field( 'lot', $post_id, true );
+	$building = get_user_meta($user->ID, 'building', true);
 
 	if($request === 'request_item') {
 
@@ -102,17 +109,17 @@ function eefss_request_item_callback() {
 
 			add_row('requests', $row, intval($post_id));
 
-			// If there are none left, set `expired` to true
-			// update_field('expired', 1, intval($post_id));
+			// If there are none left, set `fulfilled` to true
 			update_field('quantity', $available, intval($post_id));
 
-			// Update the post taxonomy to `expired` and remove it from the query results
-			wp_set_object_terms(intval($post_id), 'expired', 'status' );
+			// Update the post taxonomy to `fulfilled` and remove it from the query results
+			wp_set_object_terms(intval($post_id), 'fulfilled', 'status' );
 			wp_remove_object_terms( intval($post_id), 'active', 'status' );
 
 		} else {
 			// There is more available. Set the new quantity and return.
 			$row = array(
+				'requester_id' => $user->ID,
 				'requested_by' => $user->user_email,
 				'requested_quantity' => $quant,
 				'requested_date' => $date->format('m-d-Y'),
@@ -131,123 +138,114 @@ function eefss_request_item_callback() {
 		}
 	}
 
+        if(get_post_type($post) == 'eefss_special_ad') {
+		$emailTo = 'ashley@elkhartedfoundation.org,stephanie@elkhartedfoundation.org';
+	} else if (get_post_type($post) == 'eefss_warehouse_ad') {
+		$emailTo = 'rcrum@elkhart.k12.in.us,dpaulson@elkhart.k12.in.us,bdrehmel@elkhart.k12.in.us';
+	}
+
+	// TODO: Update recipient email address
+	$subject = 'New warehouse request';
+	$body = eefss_warehouse_request_body($user, $building, $item_title, $quant, $item_lot);
+	wp_mail($emailTo, $subject, $body);
+
 	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
+}
+
+add_filter('wp_mail_content_type', 'eefss_set_email_content_type');
+function eefss_set_email_content_type() {
+    return 'text/html';
+}
+
+// Store the Gravity Form complete submission in the correct post meta
+add_action('gform_after_submission_3', 'eefss_update_community_donors', 10, 2);
+function eefss_update_community_donors( $entry, $form ) {
+
+	$post_id = intval(rgar($entry, 13));
+
+	// error_log($post_id);
+
+	$post = get_post($post_id);
+
+	$row = array(
+		'contact_date' => date('m/d/Y'),
+		'contact_name' => rgar($entry, 9),
+		'contact_email' => rgar($entry, 6),
+		'contact_phone' => rgar($entry, 10),
+		);
+	
+	add_row('contacts', $row, intval($post_id));
+
 }
 
 add_action( 'query_vars', 'eefss_add_query_vars' );
 function eefss_add_query_vars( $vars ) {
 	$vars[] = 'request';
 	$vars[] = 'auth';
+	$vars[] = 'userid';
+	$vars[] = 'postid';
+	$vars[] = 'item';
 
 	return $vars;
+}
+
+// template the email
+function eefss_warehouse_request_body($user, $building, $item, $quant, $lot) {
+	$body = '<p>Requester: <b>' . $user->first_name . ' ' . $user->last_name . '</b></p>';
+	$body .= '<p>Requester email: <b>' . $user->user_email . '</b></p>';
+	$body .= '<p>Building: <b>' . $building . '</b></p>';
+	$body .= '<p>Quantity: <b>' . $quant . '</b></p>';
+	$body .= '<p>Item: <b>' . $item . "</b></p>";
+	$body .= '<p>Lot #: <b>' . $lot . '</b></p>';
+
+        // error_log("Sent to " . $body);
+	return $body;
+}
+
+// Create the body of the tickle email to users
+function eefss_email_template($type, $postid, $title, $userid) {
+
+	$template['subject'] = "Schoolhouse Supply Store Check In";
+	
+	// Send a body string based on the type
+	if($type === 'warehouse') {
+		
+		$template['body'] = 'Thanks for placing a request with the EEF Schoolhouse Supply Store. You recently made the following request: ';
+		$template['body'] .= '<br/><br />' . $title . '<br/><br />';
+
+		// Send the post ID and user ID as query strings
+		$template['body'] .= '<b>Please take a moment to <a href="https://supply-store.onecityonemission.org/order-update/?userid='. $userid . '&postid=' . $postid .'&item=' . urlencode($title) .'">submit this form</a> to update the status of your request.</b>';
+		$template['body'] .= '<br /><br />Thank you for using the Schoolhouse Supply Store!';
+
+	} else if($type === 'community') {
+
+		$template['body'] = 'Thank you for posting to the EEF Schoolhouse Supply Store Community! About a week ago, you were contacted by a member of our community with an offer to help with your project. We want to check in and make sure you were able to make arrangements for supplies, volunteer time, or financial support.';
+
+		// Send the post ID and user ID as query strings
+		$template['body'] .= '<br /><br /><b>Please take a moment to <a href="https://supply-store.onecityonemission.org/community-request-update/?userid='. $userid . '&postid=' . $postid .'&item=' . urlencode($title) .'">submit this form</a> to update the status of your request.</b>';
+		$template['body'] .= '<br /><br />Thank you for using the Schoolhouse Supply Store!';
+
+	}
+
+	return $template;
 }
 
 /***********************/
 /** USER REGISTRATION **/
 /***********************/
-
-/** Custom user registration form */
-add_action('register_form', 'eefss_register_form');
-function eefss_register_form() {
+add_action( 'gform_after_submission_4', 'eefss_save_user_building', 5, 2);
+function eefss_save_user_building($entry, $form) {
 	
-	$allowed = get_buildings();
-
-	$building = ! empty( $_POST['building'] ) ? strval( $_POST['building'] ) : '';
-
-	$first_name = ( ! empty( $_POST['first_name'] ) ) ? sanitize_text_field( $_POST['first_name'] ) : '';
-	$last_name = ( ! empty($_POST['last_name'] ) ) ? sanitize_text_field( $_POST['last_name' ]) : '';
-
-	?>
-
-	<p>
-		<label for="first_name"><?php esc_html_e( 'First Name', 'crf'); ?><br />
-		<input type="text" id="first-name" name="first_name" class="input" value="<?php echo esc_attr( $first_name ); ?>" />
-
-		<label for="last_name"><?php esc_html_e( 'Last Name', 'crf'); ?><br />
-		<input type="text" id="last-name" name="last_name" class="input" value="<?php echo esc_attr(  $last_name  ); ?>" />
-
-		<label for="building"><?php esc_html_e( 'Building', 'crf' ) ?><br/>
-			<select
-			       id="building"
-			       name="building"
-			       class="input"
-			>
-
-			<?php 
-				foreach($allowed as $the_building) {
-					echo '<option value="'. $the_building .'">' . $the_building .'</option>';
-				}
-			?>
-			</select>
-		</label>
-	</p>
-	<?php
-}
-
-/** Custom registration errors to display if needed */
-add_filter( 'registration_errors', 'eefss_registration_errors', 10, 3 );
-function eefss_registration_errors( $errors, $sanitized_user_login, $user_email ) {
+	$user_id = rgar($entry, 5);
+	$building = rgar($entry, 6);
 
 	$allowed = get_buildings();
 
-	// Make sure a building is selected.
-	// if ( empty( $_POST['building'] ) ) {
-	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	// }
-
-	// Validate the building input.
-	if ( ! empty( $_POST['building'] ) && !is_allowed_building(strval( $_POST['building'] ) ) ) {
-		$errors->add( 'building_error', __( '<strong>ERROR</strong>: The building you submitted is not allowed. Please try again.', 'crf' ) );
-	}
-
-	// Validate the submitted email address.
-	if ( ! empty( $_POST['user_email'] ) && ! preg_match_all('/(\@elkhart\.k12\.in\.us)/i', $_POST['user_email'])) {
-		$errors->add('user_email_error', __('<strong>ERROR</strong>: Please use a valid ECS email address to register.', 'crf') );
-	}
-
-	// Sanitize the text inputs
-	if ( empty( $_POST['first_name'] ) || ! empty( $_POST['first_name'] ) && trim( $_POST['first_name'] ) == '' ) {
-		$errors->add( 'first_name_error', sprintf('<strong>%s</strong>: %s',__( 'ERROR', 'understrap' ),__( 'You must include a first name.', 'understrap' ) ) );
-	}
-
-	if ( empty( $_POST['last_name'] ) || ! empty( $_POST['last_name'] ) && trim( $_POST['last_name'] ) == '' ) {
-		$errors->add( 'last_name_error', sprintf('<strong>%s</strong>: %s',__( 'ERROR', 'understrap' ),__( 'You must include a last name.', 'understrap' ) ) );
-	}
-
-	return $errors;
-}
-
-/** Register the new user */
-add_action( 'user_register', 'eefss_user_register' );
-function eefss_user_register( $user_id ) {
-
-	$allowed = get_buildings();
-
-	// Make sure a building is submitted to the DB.
-	// if ( empty( $_POST['building'] ) ) {
-	// 	$errors->add( 'building_error', __( '<strong>ERROR</strong>: Please enter a valid building name.', 'crf' ) );
-	// }
-
-	// Validate the building submission one last time
-	if ( ! empty( $_POST['building'] ) && is_allowed_building(strval( $_POST['building'] ) ) ) {
-		update_user_meta( $user_id, 'building', strval( $_POST['building'] ) );
-	}
-
-	if ( ! empty( $_POST['first_name'] ) ) {
-		update_user_meta( $user_id, 'first_name', sanitize_text_field( $_POST['first_name'] ) );
-	}
-
-	if ( ! empty( $_POST['last_name'] ) ) {
-		update_user_meta( $user_id, 'last_name', sanitize_text_field( $_POST['last_name'] ) );
+	if ( is_allowed_building(strval( $building ) ) ) {
+		update_user_meta( intval($user_id), 'building', strval( $building ) );
 	}
 
 }
-
-// /** Redirect teachers to index instead of the dashboard after login **/
-// add_action( 'login_redirect', 'eefss_redirect_teacher_on_login', 10, 3);
-// function eefss_redirect_teacher_on_login( $redirect, $request, $user ) {
-// 	return (is_array($user->roles) && in_array('administrator', $user->roles)) ? admin_url() : site_url();
-// }
 
 /** Redirect to index on logout **/
 add_action( 'wp_logout', 'eefss_redirect_user_on_logout');
@@ -326,24 +324,26 @@ function eefss_user_login_check($args = '') {
 function get_buildings() {
 
 	$buildings = array(
+		'Administration',
 		'Beardsley',
 		'Beck',
 		'Bristol',
-		'Central HS',
+		'Central',
 		'Cleveland',
 		'Daly',
 		'Eastwood',
 		'Elkhart Academy',
 		'Feeser',
 		'Hawthorne',
-		'Memorial HS',
-		'North Side MS',
+		'Memorial',
+		'Monger',
+		'North Side',
 		'Osolo',
-		'Pierre Moran MS',
+		'Pierre Moran',
 		'Pinewood',
 		'Riverview',
 		'Roosevelt',
-		'West Side MS',
+		'West Side',
 		'Woodland',
 	);
 
@@ -448,6 +448,49 @@ function eefss_register_community_ads() {
     register_post_type('eefss_community_ad', $args);
 }
 
+/** Register Special Ad post type **/
+add_action('init', 'eefss_register_special_ads');
+function eefss_register_special_ads() {
+
+	$labels = array(
+		'name' => __('Special Ads', 'en'),
+		'singular_name' => __('EEF Special'),
+		'add_new' => __('New Listing'),
+		'add_new_item' => __('New Listing'),
+		'edit_item' => __('Edit Item Details'),
+		'new_item' => __('New Listing'),
+		'view_item' => __('View Item'),
+		'search_items' => __('Search Listings'),
+		'not_found' => __('No Items Found'),
+		'not_found_in_trash' => __('No items found in trash')
+	);
+
+	$args = array(
+		'label' => __('eefss_special_ad', 'eefss_special_ads'),
+		'description' => __('Specialty Item', 'eefss_special_ads'),
+		'labels' => $labels,
+		'supports' => array(
+            'title',
+            'editor',
+			'custom-fields',
+			'thumbnail',
+			'post-formats'
+		),
+		'hierarchical' => true,
+		'publicly_queryable' => true,
+		'public' => true,
+		'show_ui' => true,
+		'show_in_menu' => true,
+		'show_in_nav_menus' => true,
+		'has_archive' => true,
+		'rewrite' => true,
+		'capability_type' => array('eefss_special_ad', 'eefss_special_ads'),
+		'taxonomies' => array('category', 'status'),
+		'map_meta_cap' => true,
+	);
+    register_post_type('eefss_special_ad', $args);
+}
+
 /** Register Warehouse Ad post type **/
 add_action('init', 'eefss_register_warehouse_ads');
 function eefss_register_warehouse_ads() {
@@ -506,7 +549,7 @@ function eefss_register_status_taxonomy() {
 		'new_item_name' => __( 'New Status Name' ),
 		'menu_name' => __( 'Statuses' ),
 	);
-	register_taxonomy('status', array('eefss_warehouse_ad', 'eefss_community_ad'), array(
+	register_taxonomy('status', array('eefss_warehouse_ad', 'eefss_community_ad', 'eefss_special_ad'), array(
 		'hierarchical' => true,
 		'labels' => $labels,
 		'show_ui' => true,
@@ -521,7 +564,7 @@ add_filter( 'pre_get_posts', 'eefss_site_search' );
 function eefss_site_search( $query ) {
 	
     if ( $query->is_search ) {
-		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad' ) );
+		$query->set( 'post_type', array( 'eefss_warehouse_ad', 'eefss_community_ad', 'eefss_special_ad' ) );
 		$query->set( 'post_status', array( 'publish' ) );
 		$query->set( 'status', array( 'active' ) ); // Check the custom taxonomy
     }
@@ -573,24 +616,33 @@ function eefss_add_manager_role_caps() {
 		$role->add_cap( 'read' );
 		$role->add_cap( 'read_eefss_warehouse_ad' );
 		$role->add_cap( 'read_eefss_community_ad' );
+		$role->add_cap( 'read_eefss_special_ad' );
 		$role->add_cap( 'edit_eefss_warehouse_ad' );
 		$role->add_cap( 'edit_eefss_community_ad' );
+		$role->add_cap( 'edit_eefss_special_ad' );
 		$role->add_cap( 'edit_eefss_warehouse_ads' );
 		$role->add_cap( 'edit_eefss_community_ads' );
+		$role->add_cap( 'edit_eefss_special_ads' );
 		$role->add_cap( 'edit_others_eefss_warehouse_ads' );
 		$role->add_cap( 'edit_others_eefss_community_ads' );
+		$role->add_cap( 'edit_others_eefss_special_ads' );
 		$role->add_cap( 'edit_published_eefss_warehouse_ads' );
 		$role->add_cap( 'edit_published_eefss_community_ads' );
+		$role->add_cap( 'edit_published_eefss_special_ads' );
 		$role->add_cap( 'publish_eefss_warehouse_ads' );
 		$role->add_cap( 'publish_eefss_community_ads' );
+		$role->add_cap( 'publish_eefss_special_ads' );
 		$role->add_cap( 'delete_eefss_warehouse_ads' );
+		$role->add_cap( 'delete_eefss_community_ads' );
+		$role->add_cap( 'delete_eefss_special_ads' );
 		$role->add_cap( 'delete_others_eefss_warehouse_ads' );
 		$role->add_cap( 'delete_others_eefss_community_ads' );
+		$role->add_cap( 'delete_others_eefss_special_ads' );
 		$role->add_cap( 'delete_published_eefss_warehouse_ads' );
 		$role->add_cap( 'delete_published_eefss_community_ads' );
+		$role->add_cap( 'delete_published_eefss_special_ads' );
 
 }
-
 /** Add role capabilities for teachers **/
 add_action('init', 'eefss_add_teacher_caps');
 function eefss_add_teacher_caps() {
@@ -604,35 +656,6 @@ function eefss_add_teacher_caps() {
 		$role->add_cap( 'edit_published_eefss_community_ads' );
 
 }
-
-/** Add default categories on theme activation **/
-// add_action('init', 'eefss_register_default_categories');
-// function eefss_register_default_categories() {
-// 	$cats = array(
-// 		array(
-// 			'Consumables',
-// 			'category',
-// 			array(
-// 				'description' => 'Items that are used once, like pencils, pens, erasers, etc.',
-// 				'slug' => 'consumables'
-// 			),
-// 		),
-// 		array(
-// 			'Furniture',
-// 			'category',
-// 			array(
-// 				'description' => 'All things furniture. Big and small.',
-// 				'slug' => 'furniture',
-// 			),
-// 		),
-// 	);
-
-// 	foreach($cats as $the_cat) {
-// 		if( !term_exists($the_cat) ) {
-// 			wp_insert_term($the_cat);
-// 		}
-// 	}
-// }
 
 /******************************/
 /** DASHBOARD CUSTOMIZATIONS **/
@@ -727,7 +750,7 @@ function eefss_manager_dash_meta_display($data) {
 			array(
 				'taxonomy' => 'status',
 				'field' => 'slug',
-				'terms' => array('request_pending', 'expired'),
+				'terms' => array('fulfilled'),
 				'operator' => 'NOT IN',
 			)
 		)
@@ -750,7 +773,7 @@ function eefss_manager_dash_meta_display($data) {
 			array(
 				'taxonomy' => 'status',
 				'field' => 'slug',
-				'terms' => array('active', 'expired'),
+				'terms' => array('active', 'fulfilled'),
 				'operator' => 'NOT IN',
 			)
 		)
@@ -799,6 +822,11 @@ function eefss_teacher_dash_meta_display($data) {
 		'author' => get_current_user_id(),
 		'orderby' => 'post_date',
 		'order' => 'ASC',
+		'tax_query' => array(
+			'taxonomy' => 'status',
+			'field' => 'slug',
+			'terms' => array('active'),
+		)
 	));
 
 	?>
@@ -924,6 +952,8 @@ function eefss_post_acf_data() {
 
 	$complete = ($acf_data['complete']) ? 'Completed' : 'In Progress';
 
+	$user_string .= $author->first_name . ' ' . $author->last_name;
+
 	$string = "<div class='eefss_community_ad_data'>
 		<h2>Staff Member Info</h2>
 		<div class='info'>
@@ -935,7 +965,7 @@ function eefss_post_acf_data() {
 		<h4>Project Details</h4>
 		<div class='status'>Status: ". $complete . "</div>
 		<div class='cost'>Est. Cost: $" . $acf_data['cost_estimate'] . "</div>
-		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-useremail='" . $author->user_email . "' data-target='#teacherContact'>Contact Teacher</button>
+		<button type='button' class='btn btn-info mt-2' data-toggle='modal' data-postid='" . $post_id . "' data-useremail='" . $author->user_email . "' data-userstring='" . $user_string . "' data-target='#teacherContact'>Contact Teacher</button>
 	</div>";
 
 	return $string;
@@ -945,12 +975,16 @@ add_shortcode( 'author-data', 'eefss_author_posts' );
 function eefss_author_posts() {
 	global $wpdb, $post;
 
-	$author_id = $post->post_author;
-	$author = get_userdata($author_id);
+	if(is_page()) {
+		$author = wp_get_current_user();
+	} else {
+		$author_id = $post->post_author;
+		$author = get_userdata($author_id);
+	}
 
 	$query = get_posts(array(
 		'post_type' => 'eefss_community_ad',
-		'author' => $author_id,
+		'author' => $author->ID,
 		'orderby' => 'post_date',
 		'order' => 'DESC',
 		'numberposts' => 5
@@ -958,10 +992,11 @@ function eefss_author_posts() {
 
 	$string = '<div class="teacher-data">
 		<h4>More by '. $author->first_name .'</h4>
-		<hr />
-		<ol>';
+		<hr />';
 
-		if($query > 0) {
+		if(count($query) > 0) {
+
+			$string .= '<ol>';
 
 			foreach($query as $item) {
 
@@ -969,13 +1004,16 @@ function eefss_author_posts() {
 
 			}
 
-		};
+			$string .= '</ol>';
 
-	$string .= '</ol></div>';
+		} else {
+			$string .= '<p>You don\'t have any posts yet! <a href="/staff-request">Make one now.</a></p>';
+		}
+
+	$string .= '</div>';
 
 	return $string;
 }
-
 add_shortcode( 'warehouse-data', 'eefss_warehouse_acf_data');
 function eefss_warehouse_acf_data() {
 	global $post;
@@ -1023,3 +1061,290 @@ function eefss_add_custom_css_classes( $button, $form ) {
     $input->setAttribute( 'class', $classes );
     return $dom->saveHtml( $input );
 }
+
+// Capture Gravity Forms submission and return data for the donor
+add_filter( 'gform_confirmation', 'eefss_financial_confirmation', 10, 4);
+function eefss_financial_confirmation($confirmation, $form, $entry, $ajax) {
+	
+	if($form["id"] == "3") {
+		$type = rgar($entry, '4');
+
+		if($type === 'financial') {
+
+			$string = 'Please apply this to ' . rgar($entry, '11') .'\'s project, ' . rgar($entry, '2') . '.';
+
+			$confirmation = '
+				<br/>
+				<div class="confirmationbuild">
+				<h2>Thank you for offering a financial contribution!</h2> 
+	
+				<p>You can make your secure donation via the EEF online donation page. On the donation form, please select <b>Tools for Schools</b> for your donation type and paste in the following information:</p>
+	
+				<textarea class="form-control rounded-1" rows="5" cols="25" id="confirmation-select" onclick="this.focus();this.select()" readonly="readonly">' . $string .'</textarea>
+	
+				<a class="btn btn-primary" href="https://elkharteducationfoundation.networkforgood.com/projects/37979-make-a-gift-today">Make my donation</a>
+	
+				</div>';
+
+			return $confirmation;
+		}
+
+	} else {
+
+		return $confirmation;
+
+	}
+
+}
+
+if( !wp_next_scheduled( 'eefss_cron_hook' )) {
+
+	wp_schedule_event( time(), 'hourly', 'eefss_cron_hook' );
+
+}
+
+// Send warehouse checks to all users
+// Run with WP_Cron daily
+// TODO: Figure out where to hook this function
+add_action('eefss_cron_hook', 'eefss_send_warehouse_reminders');
+function eefss_send_warehouse_reminders() {
+
+	// Get active warehouse posts
+	$all_active = new WP_Query(array(
+		'post_type' => array('eefss_warehouse_ad'),
+		'post_status' => 'publish',
+		'posts_per_page' => -1,
+		'tax_query' => array(
+			'relation' => 'AND',
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('active'),
+				'operator' => 'IN',
+			),
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('fulfilled'),
+				'operator' => 'NOT IN',
+			)
+		)
+	));
+
+	wp_reset_postdata();
+
+	foreach($all_active->posts as $post) {
+
+		// If there are rows in the requests repeater
+		if(have_rows('requests', intval($post->ID))) {
+
+			while(have_rows('requests', intval($post->ID))) : the_row(); 
+
+				// Check the sent value first
+				$sent = get_sub_field('reminder_sent');
+
+				if(!$sent) {
+
+					$input = get_sub_field('requested_date');
+	
+					$requested_on = date('m/d/Y', strtotime($input));
+	
+					$past = date('m/d/Y', strtotime('-1 week'));
+	
+					// If the request was one week ago, send an email
+					if($requested_on === $past) {
+	
+						// Get the email, user, post ID and post title for the email
+						$recip = get_sub_field('requested_by');
+						$user_id = get_sub_field('requester_id');
+	
+						$post_id = $post->ID;
+						$post_title = $post->post_title;
+	
+						// Template the email
+						$template = eefss_email_template('warehouse', $post_id, $post_title, $user_id);
+	
+						// Send an email to check the status of the request from the user
+						add_filter('wp_mail_content_type', create_function('', 'return "text/html"; '));
+	
+						$emailTo = $recip;
+						$subject = $template['subject'];
+						$body = $template['body'];
+						wp_mail($emailTo, $subject, $body);
+	
+						// Mark a reminder a sent so they're not bombarded with emails.
+						update_sub_field('reminder_sent', 1);
+	
+					}
+
+				}
+
+			endwhile;
+			
+		} else {
+			
+			error_log('No rows found');
+
+		}
+
+	}
+
+}
+
+// Send donor checks to all teachers
+// Ask if they've heard from the donor
+add_action('eefss_cron_hook', 'eefss_send_community_reminders');
+function eefss_send_community_reminders() {
+
+	// query only posts with at least one row
+	$meta_query = [
+	    [
+			'key'     => 'contacts_0_contact_date',
+			'compare' => 'EXISTS',
+		]
+	];
+
+	// Get active warehouse posts
+	$all_active = new WP_Query(array(
+		'post_type' => array('eefss_community_ad'),
+		'post_status' => 'publish',
+		'posts_per_page' => -1,
+		'tax_query' => array(
+			'relation' => 'AND',
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('active'),
+				'operator' => 'IN',
+			),
+			array(
+				'taxonomy' => 'status',
+				'field' => 'slug',
+				'terms' => array('fulfilled'),
+				'operator' => 'NOT IN',
+			)
+		),
+		'meta_query' => $meta_query,
+	));
+
+	wp_reset_postdata();
+
+	// We only queried posts with contacts, so this should loop without any errors.
+	// Only check for a donor who did not submit contact info?
+	foreach($all_active->posts as $post) {
+
+		// Get post meta for sending emails
+		$user_id = $post->post_author;
+		$user = get_user_by( 'id', $user_id );
+		$recip = $user->user_email;
+
+		while(have_rows('contacts', intval($post->ID))) : the_row(); 
+
+				// Check the sent value first
+				$sent = get_field('reminder_sent');
+
+				// If an email hasn't been sent yet...
+				if(!$sent) {
+
+					// Get the first contacted date
+					$input = get_sub_field('contact_date');
+	
+					$contacted_on = date('m/d/Y', strtotime($input));
+	
+					$past = date('m/d/Y', strtotime('-1 week'));
+	
+					// If the request was one week ago, send an email
+					if($contacted_on === $past) {
+
+						$template = eefss_email_template('community', $post_id, $post_title, $user_id);
+
+						// Send an email to check the status of the request from the user
+						add_filter('wp_mail_content_type', create_function('', 'return "text/html"; '));
+
+						$emailTo = $recip;
+						$subject = $template['subject'];
+						$body = $template['body'];
+						wp_mail($emailTo, $subject, $body);
+
+						update_field( 'reminder_sent', 1, $post_id );
+	
+					}
+
+				}
+
+			endwhile;
+
+		// Get the date of the first contact and compate
+
+		// Contact the post author via email to check on the status.
+		$post_id = $post->ID;
+		$post_title = $post->post_title;
+
+		// Template the email
+		$template = eefss_email_template('community', $post_id, $post_title, $user_id);
+
+		// Send an email to check the status of the request from the user
+		add_filter('wp_mail_content_type', create_function('', 'return "text/html"; '));
+
+		$emailTo = $recip;
+		$subject = $template['subject'];
+		$body = $template['body'];
+		wp_mail($emailTo, $subject, $body);
+
+		update_field( 'reminder_sent', 1, $post_id );
+
+	}
+
+}
+
+// Store the Warehouse Compelte form on the requester's row
+add_action('gform_after_submission_6', 'eefss_update_warehouse_requests', 10, 2);
+function eefss_update_warehouse_requests( $entry, $form ) {
+
+	$post_id = intval(rgar($entry, 4));
+	$user_id = intval(rgar($entry, 3));
+	$complete = rgar($entry, 5);
+
+	$post = get_post($post_id);
+
+	if( have_rows('requests', $post_id) ):
+
+		while( have_rows('requests', $post_id) ) : the_row();
+
+			update_sub_field('completed', $complete, $post_id);
+			update_sub_field('completed_date', date('m/d/Y'), $post_id);
+
+		endwhile;
+
+		$the_post = get_post($post_id);
+		wp_update_post($the_post);
+	
+	else:
+
+		error_log('No rows found');
+
+	endif;
+
+}
+
+// Mark the appropriate community post based on the teacher feedback
+add_action('gform_after_submission_7', 'eefss_update_community_request', 10, 2);
+function eefss_update_community_request( $entry, $form ) {
+
+	$user_id = intval(rgar($entry, 1));
+	$post_id = intval(rgar($entry, 2));
+	$complete = rgar($entry, 4);
+
+	$post = get_post($post_id);
+
+	update_field( 'complete', $complete, $post_id);
+
+	if($complete) {
+
+		wp_set_object_terms( intval($post_id), 'fulfilled', 'status' );
+		wp_remove_object_terms( intval($post_id), 'active', 'status' );
+
+	}
+
+}
+

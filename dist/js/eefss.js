@@ -4,6 +4,9 @@ jQuery(document).ready(function () {
 
         console.log('Running...');
 
+        jQuery('#response').html('Processing...');
+        jQuery('#request-item-btn').prop("disabled", true);
+
         // Validate the total quantity available before submitting
         let quant = parseInt(jQuery('#quant').val());
         let avail = parseInt(jQuery('#avail-quant').html());
@@ -53,16 +56,31 @@ jQuery(document).ready(function () {
     jQuery('#teacherContact').on('show.bs.modal', function() {
         let button = jQuery(event.target);
         let recip;
+        let stringName;
+        let postId;
         if(button.data('useremail')) {
             recip = button.data('useremail');
-            console.log(`Found ${recip}`)
         } else {
             console.log(`Found nothing`)
             recip = '';
         }
 
+        if(button.data('userstring')) {
+            stringName = button.data('userstring');
+        } else {
+            stringName = '';
+        }
+
+        if(button.data('postid')) {
+            postId = button.data('postid');
+        } else {
+            postId = '';
+        }
+
         let modal = jQuery(this);
 
         modal.find('#input_3_7').val(recip);
+        modal.find('#input_3_11').val(stringName);
+        modal.find('#input_3_13').val(postId);
     })
 })
