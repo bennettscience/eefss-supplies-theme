@@ -5,3 +5,4 @@ accts.txt
 vendor/
 *.zip
 query.txt
+dist/
