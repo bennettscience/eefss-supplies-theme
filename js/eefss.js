@@ -57,6 +57,7 @@ jQuery(document).ready(function () {
         let button = jQuery(event.target);
         let recip;
         let stringName;
+        let postId;
         if(button.data('useremail')) {
             recip = button.data('useremail');
         } else {
@@ -70,9 +71,16 @@ jQuery(document).ready(function () {
             stringName = '';
         }
 
+        if(button.data('postid')) {
+            postId = button.data('postid');
+        } else {
+            postId = '';
+        }
+
         let modal = jQuery(this);
 
         modal.find('#input_3_7').val(recip);
         modal.find('#input_3_11').val(stringName);
+        modal.find('#input_3_13').val(postId);
     })
 })

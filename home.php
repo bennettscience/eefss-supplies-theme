@@ -45,7 +45,7 @@ $container = get_theme_mod( 'understrap_container_type' );
                   </div>
                   <div class="row justify-content-center"  id="acct-cta">
                     <div class="col-md-8">
-                      <a class="btn btn-secondary" href="<?php echo home_url( '/wp-login.php?action=register' ); ?>">Create Account</a>
+                      <a class="btn btn-secondary" href="<?php echo home_url( '/register' ); ?>">Create Account</a>
                     </div>
                   </div>
                 </div>
@@ -67,6 +67,65 @@ $container = get_theme_mod( 'understrap_container_type' );
                   </div>
                 </div>
                 <?php }; ?>
+                  <div class="container">
+                    <div class="special-block row"> <!-- Specialty items -->
+                      <h1 class="col-lg-12 heading">EEF Special Items</h1>
+                      <p class="col-lg-12" style="text-align:center;">The items below are available for a limited time!</p>
+
+                      <?php
+
+                        $args = array(
+                          'post_type' => 'eefss_special_ad',
+                          'post_status' => 'publish',
+                          'posts_per_page' => 3,
+                          'tax_query' => array(
+                            'relation' => 'AND',
+                            array(
+                              'taxonomy' => 'status',
+                              'field' => 'slug',
+                              'terms' => array('active'),
+                              'operator' => 'IN',
+                            ),
+                            array(
+                              'taxonomy' => 'status',
+                              'field' => 'slug',
+                              'terms' => array('fulfilled'),
+                              'operator' => 'NOT IN',
+                            )
+                          )
+                        );
+                        
+                        $query = new WP_Query($args);
+
+                        if($query->have_posts()) {
+
+                          while($query->have_posts()) : $query->the_post();
+
+                        ?>
+
+                        <div class="special col-sm-4">
+
+                          <div class="well">
+                            <div class="header">
+                              <h3 class="headline"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+                            </div>
+                            <div class="excerpt">
+                              <?php the_excerpt('More...'); ?>
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        <?php
+                          endwhile;
+
+                        }
+
+                        wp_reset_postdata();
+                      ?>
+                    </div>
+                  </div>
                   <div class="container">
                   <div class="categories row"> <!-- category search -->
                       <h1 class="col-lg-12 heading">Browse by Category</h1>
@@ -123,11 +182,28 @@ $container = get_theme_mod( 'understrap_container_type' );
                     <h1 class="col-lg-12 heading">Recent Teacher Requests</h1>
                   <?php
 
-                  $query = new WP_Query(array( 
-                    'post_type'         => 'eefss_community_ad',
-                    'posts_per_page'    => 3,
-                    'post_status'       => 'publish',
-                  ));
+                       $args = array(
+                          'post_type' => 'eefss_community_ad',
+                          'post_status' => 'publish',
+                          'posts_per_page' => 3,
+                          'tax_query' => array(
+                            'relation' => 'AND',
+                            array(
+                              'taxonomy' => 'status',
+                              'field' => 'slug',
+                              'terms' => array('active'),
+                              'operator' => 'IN',
+                            ),
+                            array(
+                              'taxonomy' => 'status',
+                              'field' => 'slug',
+                              'terms' => array('fulfilled'),
+                              'operator' => 'NOT IN',
+                            )
+                          )
+                        );
+
+                  $query = new WP_Query( $args );
 
                   if($query->have_posts()) {
 
@@ -139,8 +215,10 @@ $container = get_theme_mod( 'understrap_container_type' );
 
                     <div class="well">
 
-                      <h3 class="headline"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                      <span class="author"><?php echo get_the_author_meta('display_name'); ?></span>
+                      <div class="header">
+                        <h3 class="headline"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+                        <span class="author"><?php echo get_the_author_meta('display_name'); ?></span>
+                      </div>
                       <div class="excerpt">
                         <?php the_excerpt('More...'); ?>
                       </div>

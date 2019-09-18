@@ -20,15 +20,25 @@ defined( 'ABSPATH' ) || exit;
 		);
 		?>
 
-		<?php if ( 'post' == get_post_type() ) : ?>
-
 			<div class="entry-meta">
 
-				<?php understrap_posted_on(); ?>
+				<span class="type">
+					<?php 
+						if(get_post_type() == 'eefss_community_ad') {
+							echo '<span class="text">Community</span>';
+							understrap_posted_on();
+						} else if(get_post_type() == 'eefss_warehouse_ad') {
+							echo '<span class="text">Warehouse</span>';
+						} else if(get_post_type() == 'eefss_special_ad') {
+							echo '<span class="text">EEF Special</span>';
+						} else {
+							echo '<span></span>';
+						}
+					?>
+				
+				</span>
 
 			</div><!-- .entry-meta -->
-
-		<?php endif; ?>
 
 	</header><!-- .entry-header -->
 
