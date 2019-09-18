@@ -28,7 +28,7 @@ $container = get_theme_mod( 'understrap_container_type' );
 
 			<?php 
 					$query = new WP_Query(array(
-						'post_type' => array('eefss_warehouse_ad'),
+						'post_type' => array('eefss_warehouse_ad', 'eefss_special_ad'),
 						'post_status' => 'publish',
 						'tax_query' => array(
 							'relation' => 'AND',

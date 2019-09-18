@@ -1223,8 +1223,7 @@ function eefss_send_community_reminders() {
 				'terms' => array('fulfilled'),
 				'operator' => 'NOT IN',
 			)
-		),
-		'meta_query' => $meta_query,
+		)
 	));
 
 	wp_reset_postdata();
