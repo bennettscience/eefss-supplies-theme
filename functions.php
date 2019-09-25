@@ -71,17 +71,16 @@ function eefss_request_item_callback() {
 	// Get the user
 	$user = get_user_by('id', intval($user_id));
 
-        // Get the post
-        $post = get_post( $post_id );
+	// Get the post
+	$post = get_post( $post_id );
 
 	// Set a date
 	$date = new DateTime();
 
 	// Check the action key and run the appropriate function.
-
 	$item_title = get_the_title( $post_id );
-	$item_lot = get_field( 'lot', $post_id, true );
 	$building = get_user_meta($user->ID, 'building', true);
+	$image = get_the_post_thumbnail_url( $post_id, 'medium' );
 
 	if($request === 'request_item') {
 
@@ -100,6 +99,7 @@ function eefss_request_item_callback() {
 		} elseif(intval($available) == 0) {
 
 			$row = array(
+				'requester_id' => $user->ID,
 				'requested_by' => $user->user_email,
 				'requested_quantity' => $quant,
 				'requested_date' => $date->format('m-d-Y'),
@@ -109,12 +109,12 @@ function eefss_request_item_callback() {
 
 			add_row('requests', $row, intval($post_id));
 
-			// If there are none left, set `fulfilled` to true
+			// update the available quantity
 			update_field('quantity', $available, intval($post_id));
 
-			// Update the post taxonomy to `fulfilled` and remove it from the query results
-			wp_set_object_terms(intval($post_id), 'fulfilled', 'status' );
-			wp_remove_object_terms( intval($post_id), 'active', 'status' );
+			// Update the post taxonomy to `expired` and remove it from the query results
+			wp_set_object_terms(intval($post_id), 'expired', 'status', true );
+			wp_remove_object_terms( intval($post_id), 'active', 'status', true );
 
 		} else {
 			// There is more available. Set the new quantity and return.
@@ -133,23 +133,36 @@ function eefss_request_item_callback() {
 			update_field('quantity', intval($available), intval($post_id));
 
 			// Mark the post as `requested` to filter into the admin dashboard
-			wp_set_object_terms( intval($post_id), 'request_pending', 'status' );
-			wp_remove_object_terms( intval($post_id), 'active', 'status' );
+			wp_set_object_terms( intval($post_id), 'request_pending', 'status', true );
+			// wp_remove_object_terms( intval($post_id), 'active', 'status' );
 		}
 	}
 
-        if(get_post_type($post) == 'eefss_special_ad') {
-		$emailTo = 'ashley@elkhartedfoundation.org,stephanie@elkhartedfoundation.org';
-	} else if (get_post_type($post) == 'eefss_warehouse_ad') {
-		$emailTo = 'rcrum@elkhart.k12.in.us,dpaulson@elkhart.k12.in.us,bdrehmel@elkhart.k12.in.us';
-	}
+	$body = '
+		<div class="order-container">
+		<div class="order-notes">
+		<h1>EEF Schoolhouse Supply Store Order</h1>
+		<p>This is your EEF Schoolhouse Supply Store order form. Please follow these instructions to complete the process:</p>
+		<ol>
+			<li>Print this page and have it signed or initialed by your principal.</li>
+			<li>Turn this paper into the head custodian.</li>
+			<li>The head custodian will complete the haul request.</li>
+		</ol>
+		<b>If the information below is correct, please</b>
+		<button onclick="window.print(); closeChild();">Print this form</button>
+		</div> <!-- .order-notes -->
+		<hr />
+		<table class="order-table">
+		<thead><th>Requested By</th><th>Email</th><th>Building</th></thead>
+		<tbody>
+		<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>' . $user->user_email . '</td><td>' . $building . '</td></tr>
+		<tr><td><b>Item</b></td><td colspan="2"><b>Photo</b></td></tr>
+		<tr><td>' . $item_title . '</td><td colspan="2"><img src="' . $image . '"/></td></tr>
+		<tr><td><b>Quantity</b></td><td colspan="2"><b>Approved by Principal (initial)</b></td></tr>
+		<tr><td>' . $quant . '</td><td colspan="2"></td></tbody></table></div>';
 
-	// TODO: Update recipient email address
-	$subject = 'New warehouse request';
-	$body = eefss_warehouse_request_body($user, $building, $item_title, $quant, $item_lot);
-	wp_mail($emailTo, $subject, $body);
+	wp_die(json_encode(array('message' => $body, 'remaining' => $available)));
 
-	wp_die(json_encode(array('message' => '<span class="success">Success!</span> Your request has been filed.', 'remaining' => $available)));
 }
 
 add_filter('wp_mail_content_type', 'eefss_set_email_content_type');
@@ -187,19 +200,6 @@ function eefss_add_query_vars( $vars ) {
 	$vars[] = 'item';
 
 	return $vars;
-}
-
-// template the email
-function eefss_warehouse_request_body($user, $building, $item, $quant, $lot) {
-	$body = '<p>Requester: <b>' . $user->first_name . ' ' . $user->last_name . '</b></p>';
-	$body .= '<p>Requester email: <b>' . $user->user_email . '</b></p>';
-	$body .= '<p>Building: <b>' . $building . '</b></p>';
-	$body .= '<p>Quantity: <b>' . $quant . '</b></p>';
-	$body .= '<p>Item: <b>' . $item . "</b></p>";
-	$body .= '<p>Lot #: <b>' . $lot . '</b></p>';
-
-        // error_log("Sent to " . $body);
-	return $body;
 }
 
 // Create the body of the tickle email to users
@@ -255,60 +255,60 @@ function eefss_redirect_user_on_logout() {
 }
 
 /** Create appropriate nav menus for login conditions **/
-add_action('admin_init', 'eefss_main_nav_menus',20,2);
-function eefss_main_nav_menus() {
-	$logged_in_menu = 'logged-in';
-	$logged_out_menu = 'logged-out';
+// add_action('admin_init', 'eefss_main_nav_menus',20,2);
+// function eefss_main_nav_menus() {
+// 	$logged_in_menu = 'logged-in';
+// 	$logged_out_menu = 'logged-out';
 
-	$logged_in_exists = wp_get_nav_menu_object( $logged_in_menu );
-	$logged_out_exists = wp_get_nav_menu_object( $logged_out_menu );
+// 	$logged_in_exists = wp_get_nav_menu_object( $logged_in_menu );
+// 	$logged_out_exists = wp_get_nav_menu_object( $logged_out_menu );
 
-	// If it doesn't exist, let's create it.
-	if( !$logged_in_exists) {
-		$menu_id = wp_create_nav_menu($logged_in_menu);
+// 	// If it doesn't exist, let's create it.
+// 	if( !$logged_in_exists) {
+// 		$menu_id = wp_create_nav_menu($logged_in_menu);
 
-		// Set up default menu items
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Home'),
-			'menu-item-classes' => 'home',
-			'menu-item-url' => home_url( '/' ), 
-			'menu-item-status' => 'publish'));
+// 		// Set up default menu items
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Home'),
+// 			'menu-item-classes' => 'home',
+// 			'menu-item-url' => home_url( '/' ), 
+// 			'menu-item-status' => 'publish'));
 
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Community'),
-			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
-			'menu-item-status' => 'publish'));
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Community'),
+// 			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
+// 			'menu-item-status' => 'publish'));
 
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Warehouse'),
-			'menu-item-url' => home_url( '/eefss_warehouse_ad/' ), 
-			'menu-item-status' => 'publish'));
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Warehouse'),
+// 			'menu-item-url' => home_url( '/eefss_warehouse_ad/' ), 
+// 			'menu-item-status' => 'publish'));
 
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Logout'),
-			'menu-item-url' => wp_logout_url('/'), 
-			'menu-item-status' => 'publish'));
-	}
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Logout'),
+// 			'menu-item-url' => wp_logout_url('/'), 
+// 			'menu-item-status' => 'publish'));
+// 	}
 
-	if( !$logged_out_exists ) {
-		$menu_id = wp_create_nav_menu($logged_out_menu);
+// 	if( !$logged_out_exists ) {
+// 		$menu_id = wp_create_nav_menu($logged_out_menu);
 
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Community'),
-			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
-			'menu-item-status' => 'publish'));
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Community'),
+// 			'menu-item-url' => home_url( '/eefss_community_ad/' ), 
+// 			'menu-item-status' => 'publish'));
 
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Login'),
-			'menu-item-url' => wp_login_url('index.php'),
-			'menu-item-status' => 'publish'));
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Login'),
+// 			'menu-item-url' => wp_login_url('index.php'),
+// 			'menu-item-status' => 'publish'));
 		
-		wp_update_nav_menu_item($menu_id, 0, array(
-			'menu-item-title' =>  __('Register'),
-			'menu-item-url' => home_url( '/wp-login.php?action=register' ), 
-			'menu-item-status' => 'publish'));
-	}
-}
+// 		wp_update_nav_menu_item($menu_id, 0, array(
+// 			'menu-item-title' =>  __('Register'),
+// 			'menu-item-url' => home_url( '/wp-login.php?action=register' ), 
+// 			'menu-item-status' => 'publish'));
+// 	}
+// }
 
 /** Check the current user's login status and return the correct menu **/
 add_filter('wp_nav_menu_args', 'eefss_user_login_check');
@@ -363,7 +363,6 @@ function is_allowed_building($loc) {
 }
 
 /** Show the user's location as a field in the Profile page **/
-// TODO: Convert location display into dropdown in case a user needs to update the field.
 add_action( 'show_user_profile', 'eefss_show_extra_profile_fields' );
 add_action( 'edit_user_profile', 'eefss_show_extra_profile_fields' );
 function eefss_show_extra_profile_fields( $user ) {
@@ -600,7 +599,7 @@ function eefss_query_post_type($query) {
     if($post_type)
         $post_type = $post_type;
     else
-        $post_type = array('nav_menu_item', 'eefss_warehouse_ad', 'eefss_community_ad');
+        $post_type = array('nav_menu_item', 'eefss_warehouse_ad', 'eefss_community_ad', 'eefss_special_ad');
     $query->set('post_type',$post_type);
     return $query;
     }
@@ -744,7 +743,7 @@ function eefss_manager_dash_meta_display($data) {
 			array(
 				'taxonomy' => 'status',
 				'field' => 'slug',
-				'terms' => array('active'),
+				'terms' => array('active', 'request_pending'),
 				'operator' => 'IN',
 			),
 			array(

@@ -41,7 +41,7 @@ $container = get_theme_mod( 'understrap_container_type' );
 							array(
 								'taxonomy' => 'status',
 								'field' => 'slug',
-								'terms' => array('request_pending', 'expired'),
+								'terms' => array('expired', 'fulfilled'),
 								'operator' => 'NOT IN',
 							),
 						),

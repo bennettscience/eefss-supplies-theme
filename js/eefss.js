@@ -1,17 +1,15 @@
 jQuery(document).ready(function () {
 
+    // Listen for the user to click on the request button
     jQuery('#request-item-btn').click(function () {
 
-        console.log('Running...');
-
+        // Show a little message...
         jQuery('#response').html('Processing...');
         jQuery('#request-item-btn').prop("disabled", true);
 
         // Validate the total quantity available before submitting
         let quant = parseInt(jQuery('#quant').val());
         let avail = parseInt(jQuery('#avail-quant').html());
-
-        console.log(avail);
 
         try {
             if (!quant) {
@@ -40,9 +38,20 @@ jQuery(document).ready(function () {
                 dataType: 'json',
             })
 
+            // After writing to the database...
             response.done(function(resp) {
-               jQuery('#response').html(resp.message);
-               jQuery('#avail-quant').html(resp.remaining);
+
+                // Open a popup to show the order form
+                let child = window.open('about:blank', 'Complete Order', 'height=640,width=950,toolbar=yes,location=no');
+                let childFunction = document.createElement('script');
+                childFunction.innerHTML = `
+                    let closeChild = function() {
+                    window.opener.location.reload();
+                    window.close();
+                }`
+                child.document.write('<html><head><link type="text/css" href="http://localhost/wp-content/themes/understrap/css/theme.min.css?ver=0.9.5.1563329543" rel="stylesheet" /><head><body>');
+                child.document.head.appendChild(childFunction);
+                child.document.body.innerHTML = resp.message;
             })
 
             response.fail(function(err) {
