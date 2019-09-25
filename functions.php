@@ -553,6 +553,7 @@ function eefss_register_status_taxonomy() {
 		'labels' => $labels,
 		'show_ui' => true,
 		'show_admin_column' => true,
+		'show_in_rest' => true,
 		'query_var' => true,
 		'rewrite' => array( 'slug' => 'status' ),
 	));
